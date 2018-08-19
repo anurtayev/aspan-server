@@ -1,0 +1,29 @@
+{
+  "name": "scycapp1",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "apollo-server": "^2.0.0",
+    "dotenv": "^6.0.0",
+    "fs-extra": "^7.0.0",
+    "graphql": "^0.13.2",
+    "nodemon": "^1.18.3",
+    "ramda": "^0.25.0",
+    "ts-node": "^7.0.1",
+    "tslint": "^5.11.0",
+    "typescript": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^5.0.4",
+    "@types/graphql": "^0.13.4",
+    "@types/ramda": "^0.25.36"
+  }
+}

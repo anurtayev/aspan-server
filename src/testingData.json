@@ -1,0 +1,23 @@
+{
+  "id": "/",
+  "isFile": false,
+  "entries": [
+    {
+      "id": "file1.jpeg",
+      "isFile": true
+    },
+    {
+      "id": "file2.jpeg",
+      "isFile": true
+    },
+    {
+      "id": "file3.jpeg",
+      "isFile": true
+    },
+    {
+      "id": "folder1",
+      "isFile": true,
+      "entries": []
+    }
+  ]
+}
