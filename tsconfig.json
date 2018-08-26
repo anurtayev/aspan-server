@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "sourceMap": true,
+    "strictNullChecks": true,
+    "target": "es2017",
+    "module": "commonjs",
+    "lib": [
+      "es2017",
+      "esnext.asynciterable"
+    ]
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "target": "ES2017",
+  "exclude": [
+    "node_modules",
+    "test/**/*.test.ts"
+  ]
+}

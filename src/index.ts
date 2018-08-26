@@ -1,19 +1,15 @@
 import { ApolloServer, gql } from 'apollo-server'
+import BasicRepository from './BasicFileSystemRepository'
+import * as dotenv from 'dotenv'
+import * as assert from 'assert'
+import schema from './schema'
 
-const books = [
-    {
-        title: 'Harry Potter and the Chamber of Secrets',
-        author: 'J.K. Rowling'
-    },
-    {
-        title: 'Jurassic Park',
-        author: 'Michael Crichton'
-    },
-    {
-        title: 'rondo',
-        author: 'fuck'
-    }
-]
+dotenv.config()
+const path = process.env.REPOSITORY_PATH as string
+const metaFolderName = process.env.META_FOLDER as string || '.metaFolder'
+assert(path, 'configuration error: repository path is missing')
+
+const repo = new BasicRepository({ path, metaFolderName })
 
 const typeDefs = gql`
   # Comments in GraphQL are defined with the hash (#) symbol.
@@ -32,13 +28,13 @@ const typeDefs = gql`
 `
 
 const resolvers = {
-    Query: {
-        books: () => books
-    }
+  Query: {
+    books: () => ''
+  }
 }
 
 const server = new ApolloServer({ typeDefs, resolvers })
 
 server.listen().then(({ url }) => {
-    console.log(`Server ready at ${url}`)
+  console.log(`Server ready at ${url}`)
 })
