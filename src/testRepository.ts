@@ -6,7 +6,7 @@ import {
   writeJson
 } from 'fs-extra'
 import { join, dirname } from 'path'
-import { entryLiterals, IEntryLiteral } from './testData'
+import { entryLiterals, IEntryLiteral } from './testRepositoryData'
 import { IRepositoryOptions } from './types'
 
 export const create = async (options: IRepositoryOptions): Promise<void> => {

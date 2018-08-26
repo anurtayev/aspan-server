@@ -2,12 +2,12 @@ import test from 'ava'
 import * as sinon from 'sinon'
 import { join } from 'path'
 import * as shortid from 'shortid'
-import * as testData from './createTestRepository'
+import * as testRepository from './testRepository'
 
 import BasicFileSystemRepository from './BasicFileSystemRepository'
 import { IRepositoryOptions, IEntry, IRepository } from './types'
 
-test.beforeEach((t) => {
+test.beforeEach(async (t) => {
   const logSpy = sinon.spy()
   console.log = logSpy
   t.context.logSpy = logSpy
@@ -16,24 +16,36 @@ test.beforeEach((t) => {
     path: join(process.env.TEMP as string, shortid.generate()),
     metaFolderName: '.metaFolder'
   }
-
   t.context.repositoryOptions = repositoryOptions
+
+  await testRepository.create(repositoryOptions)
   t.context.repositoryInstance = new BasicFileSystemRepository(repositoryOptions)
 })
 
-test.afterEach((t) => {
-  testData.erase(t.context.repositoryOptions)
+test.afterEach(async (t) => {
+  await testRepository.erase(t.context.repositoryOptions)
 })
 
-test('[BasicFileSystemRepository] getEntry must return correct data', async (t) => {
+test('[BasicFileSystemRepository] getEntry must return correct entry data', async (t) => {
   const repository: IRepository = t.context.repositoryInstance
-  const entry: IEntry = await repository.getEntry('/')
 
   t.deepEqual(
-    entry,
+    await repository.getEntry('/f2'),
     {
-      id: '/',
-      isFile: false
+      id: '/f2',
+      isFile: true
     }
   )
+
+  t.deepEqual(
+    await repository.getEntry('/fo1/sf2'),
+    {
+      id: '/fo1/sf2',
+      isFile: true
+    }
+  )
+
+  await t.throwsAsync(async () => {
+    await repository.getEntry('/entryDoesNotExist')
+  })
 })

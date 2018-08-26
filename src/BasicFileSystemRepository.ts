@@ -1,4 +1,4 @@
-import { ensureDir, lstat, readdir, readFile, readJson, writeJson } from 'fs-extra'
+import { ensureDir, lstat, readdir, pathExists, readJson, writeJson } from 'fs-extra'
 import { basename, dirname, extname, join, normalize } from 'path'
 import * as r from 'ramda'
 import {
@@ -9,6 +9,7 @@ import {
   IEntry,
   TFileSystemPath
 } from './types'
+import { AspanError } from './AspanError'
 
 export default class implements IRepository {
   constructor(
@@ -16,52 +17,24 @@ export default class implements IRepository {
   ) { }
 
   public getEntry = async (id: TEntryId): Promise<IEntry> => {
-    const expId = this.expandedId(id)
+    const fsPath = this.fsPath(id)
+
     return {
       id: this.cleanseWindowsPath(id),
-      isFile: (await lstat(expId)).isFile()
+      isFile: (await lstat(fsPath)).isFile()
     }
   }
 
   public getFolderEntries = async (id: TEntryId): Promise<IEntry[]> => {
     return await Promise.all(
-      (await readdir(this.expandedId(id)))
+      (await readdir(this.fsPath(id)))
         .filter((entry) => entry !== this.options.metaFolderName)
         .map((entry) => normalize(join(id, entry)))
         .map((entry) => this.getEntry(entry))
     )
   }
 
-  public addTag = async (id: TEntryId, tag: string) => {
-    const info = await this.getMetaData(id)
-    await this.setMetaData(id, { ...info, tags: r.append(tag, info.tags) })
-  }
-
-  public removeTag = async (id: TEntryId, tag: string) => {
-    const info = await this.getMetaData(id)
-    if (!info.tags.includes(tag)) {
-      await this.setMetaData(id, { ...info, tags: r.without([tag], info.tags) })
-
-    }
-  }
-
-  public changeTitle = async (id: TEntryId, title: string) => {
-    const metaData: IMetaData = await this.getMetaData(id)
-    await this.setMetaData(
-      id,
-      title ? { ...metaData, title } : r.omit(['title'], metaData)
-    )
-  }
-
-  public changeDescription = async (id: TEntryId, description: string) => {
-    const info = await this.getMetaData(id)
-    await this.setMetaData(
-      id,
-      description ? { ...info, description } : r.omit(['description'], info)
-    )
-  }
-
-  public findEntries = async (pattern: string) => {
+  public findEntries = async (pattern: string): Promise<IEntry[]> => {
     const regex = new RegExp(pattern)
     const rootFolder = '/'
 
@@ -86,9 +59,25 @@ export default class implements IRepository {
     return info
   }
 
+  public addTag = (metaData: IMetaData, tag: string): IMetaData => {
+    return { ...metaData, tags: r.append(tag, metaData.tags as string[]) }
+  }
+
+  public removeTag = (metaData: IMetaData, tag: string): IMetaData => {
+    return { ...metaData, tags: r.append(tag, metaData.tags as string[]) }
+  }
+
+  public addAttribute = (metaData: IMetaData, tag: string): IMetaData => {
+    return { ...metaData, tags: r.append(tag, metaData.tags as string[]) }
+  }
+
+  public removeAttribute = (metaData: IMetaData, tag: string): IMetaData => {
+    return { ...metaData, tags: r.append(tag, metaData.tags as string[]) }
+  }
+
   private getAllRepositoryEntries = async (id) => {
     const files = await this.getFolderEntries(id)
-    const stats = await Promise.all(files.map((f) => lstat(this.expandedId(f.id))))
+    const stats = await Promise.all(files.map((f) => lstat(this.fsPath(f.id))))
     const expanded = await Promise.all(
       files.map(
         async (entry: IEntry, index) => stats[index].isDirectory()
@@ -103,10 +92,10 @@ export default class implements IRepository {
 
   private cleanseWindowsPath = (id: TEntryId): TFileSystemPath => id.replace(/\\/g, '/')
 
-  private expandedId = (id: TEntryId): TFileSystemPath => join(this.path, id)
+  private fsPath = (id: TEntryId): TFileSystemPath => join(this.options.path, id)
 
   private metaFolder = (id: TEntryId): TFileSystemPath => join(
-    dirname(this.expandedId(id)),
+    dirname(this.fsPath(id)),
     this.options.metaFolderName
   )
 

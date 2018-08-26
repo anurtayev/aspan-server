@@ -59,6 +59,45 @@ export const entryLiterals: IEntryLiteral[] = [
             empty: true
           }
         }
+      },
+      {
+        entry: {
+          id: 'subFolder34',
+          isFile: false
+        },
+        metaData: {
+          tags: ['notEmpty', 'NY', '2018', 'friends'],
+          attributes: {
+            empty: false,
+            title: 'New Year celebration',
+            description: 'At Zhukovs home',
+            numberOfFiles: 45
+          }
+        },
+        entries: [
+          {
+            entry: {
+              id: 'checkCT.jpeg',
+              isFile: true
+            },
+            metaData: {
+              attributes: {
+                description: 'Serega taking a picture'
+              },
+              tags: ['favorite']
+            }
+          }, {
+            entry: {
+              id: 'anotherExt_f2.jpg',
+              isFile: true
+            }
+          }, {
+            entry: {
+              id: 'gifFile.gif',
+              isFile: true
+            }
+          }
+        ]
       }
     ]
   }
