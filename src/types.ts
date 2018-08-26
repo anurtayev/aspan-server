@@ -8,7 +8,13 @@ export enum EDerivedAttributes {
   contentType = 'contentType'
 }
 
+/**
+ * Basic file system entry interface.
+ */
 export interface IEntry {
+  /**
+   * Entry id. Files system path relative to repository root.
+   */
   id: string
   isFile: boolean
 }
@@ -21,6 +27,9 @@ export interface IMetaData {
 }
 
 export interface IRepositoryOptions {
+  /**
+   * File system location when repository is located.
+   */
   path: string
   metaFolderName: string
 }

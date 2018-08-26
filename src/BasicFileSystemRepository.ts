@@ -1,4 +1,12 @@
-import { ensureDir, lstat, readdir, pathExists, readJson, writeJson } from 'fs-extra'
+import {
+  ensureDir,
+  lstat,
+  readdir,
+  pathExists,
+  readJson,
+  writeJson,
+  Stats
+} from 'fs-extra'
 import { basename, dirname, extname, join, normalize } from 'path'
 import * as r from 'ramda'
 import {
@@ -19,9 +27,16 @@ export default class implements IRepository {
   public getEntry = async (id: TEntryId): Promise<IEntry> => {
     const fsPath = this.fsPath(id)
 
+    let stats: Stats
+    try {
+      stats = await lstat(fsPath)
+    } catch (error) {
+      return Promise.reject(new AspanError(error.message))
+    }
+
     return {
       id: this.cleanseWindowsPath(id),
-      isFile: (await lstat(fsPath)).isFile()
+      isFile: stats.isFile()
     }
   }
 
