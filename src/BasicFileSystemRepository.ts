@@ -15,6 +15,7 @@ import {
   IEntry,
   TFileSystemPath
 } from './types'
+import * as glob from 'glob'
 
 export default class implements IRepository {
   constructor(
@@ -40,28 +41,33 @@ export default class implements IRepository {
   }
 
   public findEntries = async (pattern: string): Promise<IEntry[]> => {
-    const regex = new RegExp(pattern)
-    const rootFolder = '/'
+    const options = {
+      cwd: this.options.path,
+      root: this.options.path
+    }
 
-    const allId = await this.getAllRepositoryEntries(rootFolder)
-    const found = allId.filter((_: IEntry) => _.id.search(regex) >= 0
-    )
-    return found
+    return new Promise<IEntry[]>((resolve, reject) => {
+      glob(pattern, options, (error, files) => {
+        if (error) {
+          return reject(error)
+        }
+
+        return resolve(
+          Promise.all(
+            files
+              .map((fileName) => this.cleanseWindowsPath(fileName.slice(this.options.path.length)))
+              .map(async (fileName: string) => this.getEntry(fileName))
+          )
+        )
+      })
+    })
   }
+
+  public getMetaData = async (id: TEntryId): Promise<IMetaData> => await readJson(this.metaFile(id))
 
   public setMetaData = async (id: TEntryId, metaData: IMetaData) => {
     await ensureDir(this.metaFolder(id))
     await writeJson(this.metaFile(id), metaData)
-  }
-
-  public getMetaData = async (id: TEntryId): Promise<IMetaData> => {
-    let info
-    try {
-      info = await readJson(this.metaFile(id))
-    } catch (e) {
-      info = {}
-    }
-    return info
   }
 
   public addTag = (metaData: IMetaData, tag: string): IMetaData => {

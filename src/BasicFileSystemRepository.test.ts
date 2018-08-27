@@ -13,9 +13,23 @@ const test = anyTest as TestInterface<{
   repositoryInstance: IRepository
 }>
 
+const compareArrays = (foundEntries: IEntry[], expectedEntries: IEntry[]): boolean => {
+  if (foundEntries.length !== expectedEntries.length) {
+    return false
+  }
+
+  return foundEntries.every(
+    (foundEntry: IEntry) => {
+      return Boolean(expectedEntries.find(
+        (expectedEntry) => expectedEntry.id === foundEntry.id && expectedEntry.isFile === foundEntry.isFile)
+      )
+    }
+  )
+}
+
 test.beforeEach(async (t) => {
   const logSpy = sinon.spy()
-  console.log = logSpy
+  // console.log = logSpy
   t.context.logSpy = logSpy
 
   t.context.repositoryOptions = {
@@ -56,7 +70,6 @@ test('[getEntry] It must throw when entry id does not exist', async (t) => {
 })
 
 test('[getFolderEntries] It must return correct entries data', async (t) => {
-  const foundEntries1 = await t.context.repositoryInstance.getFolderEntries('/fo1')
   const expectedEntries1: IEntry[] = [
     {
       id: '/fo1/sf1',
@@ -75,18 +88,9 @@ test('[getFolderEntries] It must return correct entries data', async (t) => {
       isFile: false
     }
   ]
+  const foundEntries1 = await t.context.repositoryInstance.getFolderEntries('/fo1')
+  t.true(compareArrays(foundEntries1, expectedEntries1))
 
-  t.true(
-    foundEntries1.every(
-      (foundEntry: IEntry) => {
-        return Boolean(expectedEntries1.find(
-          (expectedEntry) => expectedEntry.id === foundEntry.id && expectedEntry.isFile === foundEntry.isFile)
-        )
-      }
-    )
-  )
-
-  const foundEntries2 = await t.context.repositoryInstance.getFolderEntries('/fo1/subFolder34')
   const expectedEntries2: IEntry[] = [
     {
       id: '/fo1/subFolder34/checkCT.jpeg',
@@ -100,16 +104,8 @@ test('[getFolderEntries] It must return correct entries data', async (t) => {
       isFile: true
     }
   ]
-
-  t.true(
-    foundEntries2.every(
-      (foundEntry: IEntry) => {
-        return Boolean(expectedEntries2.find(
-          (expectedEntry) => expectedEntry.id === foundEntry.id && expectedEntry.isFile === foundEntry.isFile)
-        )
-      }
-    )
-  )
+  const foundEntries2 = await t.context.repositoryInstance.getFolderEntries('/fo1/subFolder34')
+  t.true(compareArrays(foundEntries2, expectedEntries2))
 })
 
 test('[getFolderEntries] It must throw when folder id does not exist', async (t) => {
@@ -117,3 +113,36 @@ test('[getFolderEntries] It must throw when folder id does not exist', async (t)
     await t.context.repositoryInstance.getFolderEntries('/doesnotexits')
   })
 })
+
+test('[findEntries] It must find correct entries', async (t) => {
+  const expectedEntries = [
+    {
+      id: '/f2',
+      isFile: true
+    },
+    {
+      id: '/fo1/sf2',
+      isFile: true
+    },
+    {
+      id: '/fo1/subFolder34/anotherExt_f2.jpg',
+      isFile: true
+    }
+  ]
+  const foundEntries = await t.context.repositoryInstance.findEntries('/**/*f2*(.)*')
+  t.true(compareArrays(foundEntries, expectedEntries))
+})
+
+test('[findEntries] It must return emtpy array of entries when there is no match', async (t) => {
+  const expectedEntries = []
+  const foundEntries = await t.context.repositoryInstance.findEntries('/doesnotexist')
+  t.true(compareArrays(foundEntries, expectedEntries))
+})
+
+test('[getMetaData] It must throw if entry id does not exist', async (t) => {
+  await t.throwsAsync(async () => {
+    await t.context.repositoryInstance.getMetaData('/doesnotexits')
+  })
+})
+
+test.todo('[getMetaData] It must return correct meta data')
