@@ -5,10 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon",
-    "ava:watch": "ava src/BasicFileSystemRepository.test.js --verbose --watch",
-    "tsc:watch": "tsc --watch",
-    "clean": "ts-node ./scripts/cleanup.ts",
-    "debug": "npm-run-all --parallel tsc:watch ava:watch"
+    "test": "ava",
+    "clean": "ts-node ./scripts/cleanup.ts"
   },
   "keywords": [],
   "author": "",
@@ -31,13 +29,20 @@
     "@types/ramda": "^0.25.36",
     "@types/shortid": "0.0.29",
     "@types/sinon": "^5.0.1",
-    "ava": "^0.25.0",
+    "ava": "^1.0.0-beta.7",
     "del": "^3.0.0",
     "npm-run-all": "^4.1.3",
     "shortid": "^2.2.13",
     "sinon": "^6.1.5"
   },
   "ava": {
-    "sources": "src/**/*.js"
+    "sources": "src/**/*.ts",
+    "compileEnhancements": false,
+    "extensions": [
+      "ts"
+    ],
+    "require": [
+      "ts-node/register"
+    ]
   }
 }
