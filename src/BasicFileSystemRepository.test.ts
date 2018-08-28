@@ -4,7 +4,7 @@ import { join } from 'path'
 import * as shortid from 'shortid'
 import * as testRepository from './testRepository'
 import * as fs from 'fs-extra'
-import { cleanseWindowsPath, fsPath, metaFileName, metaFolderName } from './repositoryPath'
+import { metaFileName } from './repositoryPath'
 
 import BasicFileSystemRepository from './BasicFileSystemRepository'
 import { IRepositoryOptions, IEntry, IRepository } from './types'

@@ -10,6 +10,12 @@ import { dirname } from 'path'
 import { entryLiterals, IEntryLiteral } from './testRepositoryData'
 import { IRepositoryOptions } from './types'
 
+const writeMetaData = async (options: IRepositoryOptions, entryLiteral: IEntryLiteral) => {
+  const metaFile = metaFileName(entryLiteral.entry.id, options)
+  await ensureDir(dirname(metaFile))
+  await writeJson(metaFile, entryLiteral.metaData)
+}
+
 export const create = async (options: IRepositoryOptions): Promise<void> => {
   await emptyDir(options.path)
 
@@ -33,9 +39,3 @@ export const create = async (options: IRepositoryOptions): Promise<void> => {
 }
 
 export const erase = async (options: IRepositoryOptions): Promise<void> => await remove(options.path)
-
-const writeMetaData = async (options: IRepositoryOptions, entryLiteral: IEntryLiteral) => {
-  const metaFile = metaFileName(entryLiteral.entry.id, options)
-  await ensureDir(dirname(metaFile))
-  await writeJson(metaFile, entryLiteral.metaData)
-}

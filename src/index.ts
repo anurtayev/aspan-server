@@ -2,7 +2,6 @@ import { ApolloServer, gql } from 'apollo-server'
 import BasicRepository from './BasicFileSystemRepository'
 import * as dotenv from 'dotenv'
 import * as assert from 'assert'
-import schema from './schema'
 
 dotenv.config()
 const path = process.env.REPOSITORY_PATH as string
@@ -37,4 +36,6 @@ const server = new ApolloServer({ typeDefs, resolvers })
 
 server.listen().then(({ url }) => {
   console.log(`Server ready at ${url}`)
+}).catch((reason) => {
+  console.log(reason)
 })

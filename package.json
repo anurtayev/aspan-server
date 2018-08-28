@@ -6,7 +6,8 @@
   "scripts": {
     "start": "nodemon",
     "test": "ava",
-    "clean": "ts-node ./scripts/cleanup.ts"
+    "clean": "ts-node ./scripts/cleanup.ts",
+    "lint": "tslint --project . --fix"
   },
   "keywords": [],
   "author": "",
