@@ -3,6 +3,8 @@ import * as sinon from 'sinon'
 import { join } from 'path'
 import * as shortid from 'shortid'
 import * as testRepository from './testRepository'
+import * as fs from 'fs-extra'
+import { cleanseWindowsPath, fsPath, metaFileName, metaFolderName } from './repositoryPath'
 
 import BasicFileSystemRepository from './BasicFileSystemRepository'
 import { IRepositoryOptions, IEntry, IRepository } from './types'
@@ -170,4 +172,122 @@ test('[getMetaData] It must return correct meta data', async (t) => {
   )
 })
 
-test.todo('[setMetaData] It must set meta data correctly')
+test('[setMetaData] It must set meta data correctly', async (t) => {
+  const file = '/fo1/subFolder34/anotherExt_f2.jpg'
+  const newMetaData = {
+    attributes: { newAtt1: true, newAtt2: 46, newAtt3: 'sfsds' },
+    tags: ['newTag1', 'newTag2']
+  }
+
+  await t.context.repositoryInstance.setMetaData(
+    '/fo1/subFolder34/anotherExt_f2.jpg',
+    newMetaData
+  )
+
+  const metaFile = metaFileName(file, t.context.repositoryOptions)
+  t.true(await fs.pathExists(metaFile))
+
+  const readMetaData = await fs.readJson(metaFile)
+  t.deepEqual(
+    readMetaData,
+    newMetaData
+  )
+})
+
+test('[addTag] It must add tag correctly', async (t) => {
+  t.deepEqual(
+    await t.context.repositoryInstance.addTag(
+      {
+        attributes: { newAtt1: true, newAtt2: 46, newAtt3: 'sfsds' },
+        tags: ['newTag1', 'newTag2']
+      },
+      'addedTag'
+    ),
+    {
+      attributes: { newAtt1: true, newAtt2: 46, newAtt3: 'sfsds' },
+      tags: ['newTag1', 'newTag2', 'addedTag']
+    }
+  )
+})
+
+test('[addTag] It must not add a duplicate tag', async (t) => {
+  t.deepEqual(
+    await t.context.repositoryInstance.addTag(
+      {
+        attributes: { newAtt1: true, newAtt2: 46, newAtt3: 'sfsds' },
+        tags: ['newTag1', 'newTag2']
+      },
+      'newTag2'
+    ),
+    {
+      attributes: { newAtt1: true, newAtt2: 46, newAtt3: 'sfsds' },
+      tags: ['newTag1', 'newTag2']
+    }
+  )
+})
+
+test('[removeTag] It must remove tag correctly', async (t) => {
+  t.deepEqual(
+    await t.context.repositoryInstance.removeTag(
+      {
+        attributes: { newAtt1: true, newAtt2: 46, newAtt3: 'sfsds' },
+        tags: ['newTag1', 'newTag2']
+      },
+      'newTag2'
+    ),
+    {
+      attributes: { newAtt1: true, newAtt2: 46, newAtt3: 'sfsds' },
+      tags: ['newTag1']
+    }
+  )
+})
+
+test('[addAttribute] It must add attribute correctly', async (t) => {
+  t.deepEqual(
+    await t.context.repositoryInstance.addAttribute(
+      {
+        attributes: { newAtt1: true, newAtt2: 46, newAtt3: 'sfsds' },
+        tags: ['newTag1', 'newTag2']
+      },
+      'newAttr',
+      true
+    ),
+    {
+      attributes: { newAtt1: true, newAtt2: 46, newAtt3: 'sfsds', newAttr: true },
+      tags: ['newTag1', 'newTag2']
+    }
+  )
+})
+
+test('[addAttribute] It must update value if attribute already exist', async (t) => {
+  t.deepEqual(
+    await t.context.repositoryInstance.addAttribute(
+      {
+        attributes: { newAtt1: true, newAtt2: 46, newAtt3: 'sfsds' },
+        tags: ['newTag1', 'newTag2']
+      },
+      'newAtt1',
+      147
+    ),
+    {
+      attributes: { newAtt1: 147, newAtt2: 46, newAtt3: 'sfsds' },
+      tags: ['newTag1', 'newTag2']
+    }
+  )
+})
+
+test('[removeAttribute] It must remove attribute correctly', async (t) => {
+  t.deepEqual(
+    await t.context.repositoryInstance.removeAttribute(
+      {
+        attributes: { newAtt1: true, newAtt2: 46, newAtt3: 'sfsds' },
+        tags: ['newTag1', 'newTag2']
+      },
+      'newAtt1'
+    ),
+    {
+      attributes: { newAtt2: 46, newAtt3: 'sfsds' },
+      tags: ['newTag1', 'newTag2']
+    }
+  )
+})

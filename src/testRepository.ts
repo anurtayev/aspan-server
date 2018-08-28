@@ -1,3 +1,4 @@
+import { fsPath, metaFileName } from './repositoryPath'
 import {
   remove,
   emptyDir,
@@ -5,9 +6,9 @@ import {
   ensureDir,
   writeJson
 } from 'fs-extra'
-import { join, dirname, basename } from 'path'
+import { dirname } from 'path'
 import { entryLiterals, IEntryLiteral } from './testRepositoryData'
-import { IRepositoryOptions, IEntry } from './types'
+import { IRepositoryOptions } from './types'
 
 export const create = async (options: IRepositoryOptions): Promise<void> => {
   await emptyDir(options.path)
@@ -19,7 +20,7 @@ export const create = async (options: IRepositoryOptions): Promise<void> => {
           await writeMetaData(options, entryLiteral)
         }
 
-        const expandedId = expandId(options, entryLiteral.entry)
+        const expandedId = fsPath(entryLiteral.entry.id, options)
         if (entryLiteral.entry.isFile) {
           await ensureDir(dirname(expandedId))
           await ensureFile(expandedId)
@@ -34,18 +35,7 @@ export const create = async (options: IRepositoryOptions): Promise<void> => {
 export const erase = async (options: IRepositoryOptions): Promise<void> => await remove(options.path)
 
 const writeMetaData = async (options: IRepositoryOptions, entryLiteral: IEntryLiteral) => {
-  const metaFile = join(
-    options.path,
-    dirname(entryLiteral.entry.id),
-    options.metaFolderName,
-    `${basename(entryLiteral.entry.id)}.json`
-  )
-
+  const metaFile = metaFileName(entryLiteral.entry.id, options)
   await ensureDir(dirname(metaFile))
   await writeJson(metaFile, entryLiteral.metaData)
 }
-
-const expandId = (options: IRepositoryOptions, entry: IEntry): string => join(
-  options.path,
-  entry.id
-)
