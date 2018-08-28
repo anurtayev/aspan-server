@@ -12,19 +12,23 @@ import { IRepositoryOptions, IEntry } from './types'
 export const create = async (options: IRepositoryOptions): Promise<void> => {
   await emptyDir(options.path)
 
-  entryLiterals.forEach(async (entryLiteral) => {
-    if (entryLiteral.metaData) {
-      await writeMetaData(options, entryLiteral)
-    }
+  await Promise.all(
+    entryLiterals.map(
+      async (entryLiteral) => {
+        if (entryLiteral.metaData) {
+          await writeMetaData(options, entryLiteral)
+        }
 
-    const expandedId = expandId(options, entryLiteral.entry)
-    if (entryLiteral.entry.isFile) {
-      await ensureDir(dirname(expandedId))
-      await ensureFile(expandedId)
-    } else {
-      await ensureDir(expandedId)
-    }
-  })
+        const expandedId = expandId(options, entryLiteral.entry)
+        if (entryLiteral.entry.isFile) {
+          await ensureDir(dirname(expandedId))
+          await ensureFile(expandedId)
+        } else {
+          await ensureDir(expandedId)
+        }
+      }
+    )
+  )
 }
 
 export const erase = async (options: IRepositoryOptions): Promise<void> => await remove(options.path)

@@ -41,7 +41,7 @@ test.beforeEach(async (t) => {
   t.context.repositoryInstance = new BasicFileSystemRepository(t.context.repositoryOptions)
 })
 
-test.afterEach(async (t) => {
+test.afterEach.always(async (t) => {
   await testRepository.erase(t.context.repositoryOptions)
 })
 
@@ -145,4 +145,29 @@ test('[getMetaData] It must throw if entry id does not exist', async (t) => {
   })
 })
 
-test.todo('[getMetaData] It must return correct meta data')
+test('[getMetaData] It must return correct meta data', async (t) => {
+  t.deepEqual(
+    await t.context.repositoryInstance.getMetaData('/fo1/subFolder34/checkCT.jpeg'),
+    {
+      attributes: {
+        description: 'Serega taking a picture'
+      },
+      tags: ['favorite', 'friends']
+    }
+  )
+
+  t.deepEqual(
+    await t.context.repositoryInstance.getMetaData('/fo1/subFolder34'),
+    {
+      tags: ['notEmpty', 'NY', '2018', 'friends'],
+      attributes: {
+        empty: false,
+        title: 'New Year celebration',
+        description: 'At Zhukovs home',
+        numberOfFiles: 45
+      }
+    }
+  )
+})
+
+test.todo('[setMetaData] It must set meta data correctly')

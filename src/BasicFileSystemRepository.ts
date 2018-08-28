@@ -22,14 +22,10 @@ export default class implements IRepository {
     private readonly options: IRepositoryOptions
   ) { }
 
-  public getEntry = async (id: TEntryId): Promise<IEntry> => {
-    const fsPath = this.fsPath(id)
-
-    return {
-      id: this.cleanseWindowsPath(id),
-      isFile: (await lstat(fsPath)).isFile()
-    }
-  }
+  public getEntry = async (id: TEntryId): Promise<IEntry> => ({
+    id: this.cleanseWindowsPath(id),
+    isFile: (await lstat(this.fsPath(id))).isFile()
+  })
 
   public getFolderEntries = async (id: TEntryId): Promise<IEntry[]> => {
     return await Promise.all(

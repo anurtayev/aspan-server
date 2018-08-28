@@ -83,7 +83,7 @@ export const entryLiterals: IEntryLiteral[] = [
       attributes: {
         description: 'Serega taking a picture'
       },
-      tags: ['favorite']
+      tags: ['favorite', 'friends']
     }
   }, {
     entry: {
