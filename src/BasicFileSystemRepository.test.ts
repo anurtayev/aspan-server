@@ -222,7 +222,7 @@ test('[setMetaData] It must set meta data correctly. Derived attributes should b
   )
 })
 
-test.only('[setMetaData] It must not create a meta data file if there is no meta information', async (t) => {
+test('[setMetaData] It must not create a meta data file if there is no meta information', async (t) => {
   const file = '/fo1/subFolder34/anotherExt_f2.jpg'
   const metaFile = metaFileName(file, t.context.repositoryOptions)
 
