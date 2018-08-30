@@ -1,14 +1,11 @@
 import { ApolloServer, gql } from 'apollo-server'
-import BasicRepository from './BasicFileSystemRepository'
 import * as dotenv from 'dotenv'
-import * as assert from 'assert'
+// import * as assert from 'assert'
 
 dotenv.config()
-const path = process.env.REPOSITORY_PATH as string
-const metaFolderName = process.env.META_FOLDER as string || '.metaFolder'
-assert(path, 'configuration error: repository path is missing')
-
-const repo = new BasicRepository({ path, metaFolderName })
+// const path = process.env.REPOSITORY_PATH as string
+// const metaFolderName = process.env.META_FOLDER as string || '.metaFolder'
+// assert(path, 'configuration error: repository path is missing')
 
 const typeDefs = gql`
   # Comments in GraphQL are defined with the hash (#) symbol.

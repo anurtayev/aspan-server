@@ -1,6 +1,13 @@
 import anyTest, { TestInterface } from 'ava'
 
-import { cleanseWindowsPath, fsPath, metaFileName, metaFolderName } from './repositoryPath'
+import {
+    cleanseWindowsPath,
+    fsPath,
+    metaFileName,
+    metaFolderName,
+    entryContentType,
+    entryName
+} from './repositoryPath'
 import { IRepositoryOptions } from './types'
 
 const test = anyTest as TestInterface<{
@@ -37,4 +44,18 @@ test('[metaFolder] It must correctly derive a meta folder name', (t) => {
         metaFolderName('/foo/bar', t.context.repositoryOptions) ===
         `C:\\Users\\anurtay\\Downloads\\_r1\\foo\\${t.context.repositoryOptions.metaFolderName}`
     )
+})
+
+test('[entryContentType] It must correctly derive a contentType value', (t) => {
+    t.true(entryContentType('/foo/bar.') === '')
+    t.true(entryContentType('bar.ext') === 'ext')
+    t.true(entryContentType('../bar.gif') === 'gif')
+})
+
+test('[entryName] It must correctly derive an entry name', (t) => {
+    t.true(entryName('/foo/bar') === 'bar')
+    t.true(entryName('/foo/bar.ext') === 'bar')
+    t.true(entryName('bar.ext') === 'bar')
+    t.true(entryName('/foo/.bar') === '.bar')
+    t.true(entryName('.bar') === '.bar')
 })

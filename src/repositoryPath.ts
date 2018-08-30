@@ -1,5 +1,5 @@
 import { TEntryId, TFileSystemPath, IRepositoryOptions } from './types'
-import { join, dirname, basename } from 'path'
+import { join, dirname, basename, extname } from 'path'
 
 export const cleanseWindowsPath =
     (id: TEntryId): TFileSystemPath => id.replace(/\\/g, '/')
@@ -16,3 +16,11 @@ export const metaFolderName =
 export const metaFileName =
     (id: TEntryId, options: IRepositoryOptions): TFileSystemPath =>
         join(metaFolderName(id, options), `${basename(id)}.json`)
+
+export const entryName =
+    (id: TEntryId): string =>
+        basename(id, extname(id))
+
+export const entryContentType =
+    (id: TEntryId): string =>
+        extname(id).slice(1)

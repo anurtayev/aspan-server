@@ -13,8 +13,9 @@ Derived attributes are read-only.
 ## Decision
 
 Following attributes are derived from file system:
+
 1. name - file name without extension
-2. contentType - file extension
+2. contentType - file extension without dot, lowercased
 
 ## Consequences
 

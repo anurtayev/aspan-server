@@ -3,7 +3,8 @@ import {
   lstat,
   readdir,
   readJson,
-  writeJson
+  writeJson,
+  pathExists
 } from 'fs-extra'
 import { join, normalize } from 'path'
 import * as r from 'ramda'
@@ -16,7 +17,14 @@ import {
   TAttributeType
 } from './types'
 import * as glob from 'glob'
-import { cleanseWindowsPath, fsPath, metaFileName, metaFolderName } from './repositoryPath'
+import {
+  cleanseWindowsPath,
+  fsPath,
+  metaFileName,
+  metaFolderName,
+  entryContentType,
+  entryName
+} from './repositoryPath'
 
 export default class implements IRepository {
   constructor(
@@ -60,12 +68,29 @@ export default class implements IRepository {
     })
   }
 
-  public getMetaData = async (id: TEntryId): Promise<IMetaData> =>
-    await readJson(metaFileName(id, this.options))
+  public getMetaData = async (id: TEntryId): Promise<IMetaData> => {
+    const metaData: IMetaData = await pathExists(id) ? await readJson(metaFileName(id, this.options)) : {}
 
-  public setMetaData = async (id: TEntryId, metaData: IMetaData) => {
-    await ensureDir(metaFolderName(id, this.options))
-    await writeJson(metaFileName(id, this.options), metaData)
+    return {
+      ...metaData,
+      attributes: {
+        ...metaData.attributes,
+        entryName: entryName(id),
+        entryContentType: entryContentType(id)
+      }
+    }
+  }
+
+  public setMetaData = async (id: TEntryId, metaData: IMetaData): Promise<void> => {
+    if (metaData.tags || Object.keys(metaData.attributes).length > 2) {
+      await ensureDir(metaFolderName(id, this.options))
+      await writeJson(metaFileName(id, this.options), {
+        ...metaData,
+        attributes: {
+          ...r.omit(['entryContentType', 'entryName'], metaData.attributes)
+        }
+      })
+    }
   }
 
   public addTag = (metaData: IMetaData, tag: string): IMetaData => {
@@ -80,16 +105,32 @@ export default class implements IRepository {
     if (position) {
       return { ...metaData, tags: r.remove(position, 1, metaData.tags as string[]) }
     }
+
     return metaData
   }
 
   public addAttribute = (metaData: IMetaData, attribute: string, value: TAttributeType): IMetaData => {
-    const existingAttributes = metaData.attributes ? metaData.attributes : {}
-    existingAttributes[attribute] = value
-    return { ...metaData, attributes: existingAttributes }
+    if (attribute !== 'entryContentType' && attribute !== 'entryName') {
+      const newAttribute = {}
+      newAttribute[attribute] = value
+      return { ...metaData, attributes: { ...metaData.attributes, ...newAttribute } }
+    }
+
+    return metaData
   }
 
   public removeAttribute = (metaData: IMetaData, attribute: string): IMetaData => {
-    return { ...metaData, attributes: r.omit([attribute], metaData.attributes) }
+    if (attribute !== 'entryContentType' && attribute !== 'entryName') {
+      return {
+        ...metaData,
+        attributes: {
+          entryContentType: metaData.attributes.entryContentType,
+          entryName: metaData.attributes.entryName,
+          ...r.omit([attribute], metaData.attributes)
+        }
+      }
+    }
+
+    return metaData
   }
 }

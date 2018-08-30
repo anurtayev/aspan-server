@@ -21,7 +21,9 @@ export interface IEntry {
 
 export interface IMetaData {
   tags?: string[]
-  attributes?: {
+  attributes: {
+    entryContentType: string,
+    entryName: string,
     [key: string]: TAttributeType
   }
 }
