@@ -14,7 +14,10 @@ import {
   TEntryId,
   IMetaData,
   IEntry,
-  TAttributeType
+  TAttributeType,
+  isDerivedAttribute,
+  derivedAttributes,
+  EDerivedAttributes
 } from './types'
 import * as glob from 'glob'
 import {
@@ -69,16 +72,18 @@ export default class implements IRepository {
   }
 
   public getMetaData = async (id: TEntryId): Promise<IMetaData> => {
-    const metaData: IMetaData = await pathExists(id) ? await readJson(metaFileName(id, this.options)) : {}
-
-    return {
-      ...metaData,
-      attributes: {
-        ...metaData.attributes,
-        entryName: entryName(id),
-        entryContentType: entryContentType(id)
-      }
+    if (!await pathExists(fsPath(id, this.options))) {
+      throw new Error('entry does not exist')
     }
+
+    const metaFile = metaFileName(id, this.options)
+    const metaData: IMetaData = await pathExists(metaFile) ?
+      await readJson(metaFileName(id, this.options)) :
+      { attributes: {} }
+    metaData.attributes[EDerivedAttributes.name] = entryName(id)
+    metaData.attributes[EDerivedAttributes.contentType] = entryContentType(id)
+
+    return metaData
   }
 
   public setMetaData = async (id: TEntryId, metaData: IMetaData): Promise<void> => {
@@ -87,7 +92,7 @@ export default class implements IRepository {
       await writeJson(metaFileName(id, this.options), {
         ...metaData,
         attributes: {
-          ...r.omit(['entryContentType', 'entryName'], metaData.attributes)
+          ...r.omit(derivedAttributes, metaData.attributes)
         }
       })
     }
@@ -110,7 +115,7 @@ export default class implements IRepository {
   }
 
   public addAttribute = (metaData: IMetaData, attribute: string, value: TAttributeType): IMetaData => {
-    if (attribute !== 'entryContentType' && attribute !== 'entryName') {
+    if (!isDerivedAttribute(attribute)) {
       const newAttribute = {}
       newAttribute[attribute] = value
       return { ...metaData, attributes: { ...metaData.attributes, ...newAttribute } }
@@ -120,12 +125,12 @@ export default class implements IRepository {
   }
 
   public removeAttribute = (metaData: IMetaData, attribute: string): IMetaData => {
-    if (attribute !== 'entryContentType' && attribute !== 'entryName') {
+    if (!isDerivedAttribute(attribute)) {
       return {
         ...metaData,
         attributes: {
-          entryContentType: metaData.attributes.entryContentType,
-          entryName: metaData.attributes.entryName,
+          contentType: metaData.attributes.contentType,
+          name: metaData.attributes.name,
           ...r.omit([attribute], metaData.attributes)
         }
       }

@@ -143,31 +143,34 @@ test('[findEntries] It must return emtpy array of entries when there is no match
 })
 
 test('[getMetaData] It must throw if entry id does not exist', async (t) => {
-  await t.throwsAsync(async () => {
+  const error: Error = await t.throwsAsync(async () => {
     await t.context.repositoryInstance.getMetaData('/doesnotexits')
   })
+  t.true(error.message === 'entry does not exist')
 })
 
-test('[getMetaData] It must return correct meta data, including derived attributes', async (t) => {
+test('[getMetaData] It must return correct meta data for a file', async (t) => {
   t.deepEqual(
     await t.context.repositoryInstance.getMetaData('/fo1/subFolder34/checkCT.jpeg'),
     {
       attributes: {
-        entryContentType: 'jpeg',
-        entryName: 'checkCT',
+        contentType: 'jpeg',
+        name: 'checkCT',
         description: 'Serega taking a picture'
       },
       tags: ['favorite', 'friends']
     }
   )
+})
 
+test('[getMetaData] It must return correct meta data for folder', async (t) => {
   t.deepEqual(
     await t.context.repositoryInstance.getMetaData('/fo1/subFolder34'),
     {
       tags: ['notEmpty', 'NY', '2018', 'friends'],
       attributes: {
-        entryContentType: '',
-        entryName: 'subFolder34',
+        contentType: '',
+        name: 'subFolder34',
         empty: false,
         title: 'New Year celebration',
         description: 'At Zhukovs home',
@@ -175,13 +178,15 @@ test('[getMetaData] It must return correct meta data, including derived attribut
       }
     }
   )
+})
 
+test('[getMetaData] It must return meta data with derived attributes if no other info is available', async (t) => {
   t.deepEqual(
     await t.context.repositoryInstance.getMetaData('/f1'),
     {
       attributes: {
-        entryContentType: '',
-        entryName: 'f1'
+        contentType: '',
+        name: 'f1'
       }
     }
   )
@@ -193,8 +198,8 @@ test('[setMetaData] It must set meta data correctly. Derived attributes should b
 
   const newMetaData = {
     attributes: {
-      entryContentType: 'jpg',
-      entryName: 'anotherExt_f2',
+      contentType: 'jpg',
+      name: 'anotherExt_f2',
       newAtt1: true,
       newAtt2: 46,
       newAtt3: 'sfsds'
@@ -216,7 +221,7 @@ test('[setMetaData] It must set meta data correctly. Derived attributes should b
     {
       ...newMetaData,
       attributes: {
-        ...r.omit(['entryContentType', 'entryName'], newMetaData.attributes)
+        ...r.omit(['contentType', 'name'], newMetaData.attributes)
       }
     }
   )
@@ -228,8 +233,8 @@ test('[setMetaData] It must not create a meta data file if there is no meta info
 
   const newMetaData = {
     attributes: {
-      entryContentType: 'jpg',
-      entryName: 'anotherExt_f2'
+      contentType: 'jpg',
+      name: 'anotherExt_f2'
     }
   }
 
@@ -246,7 +251,7 @@ test('[addTag] It must add tag correctly', async (t) => {
     await t.context.repositoryInstance.addTag(
       {
         attributes: {
-          entryContentType: 'jpeg', entryName: 'allo',
+          contentType: 'jpeg', name: 'allo',
           newAtt1: true, newAtt2: 46, newAtt3: 'sfsds'
         },
         tags: ['newTag1', 'newTag2']
@@ -255,7 +260,7 @@ test('[addTag] It must add tag correctly', async (t) => {
     ),
     {
       attributes: {
-        entryContentType: 'jpeg', entryName: 'allo',
+        contentType: 'jpeg', name: 'allo',
         newAtt1: true, newAtt2: 46, newAtt3: 'sfsds'
       },
       tags: ['newTag1', 'newTag2', 'addedTag']
@@ -268,7 +273,7 @@ test('[addTag] It must not add a duplicate tag', async (t) => {
     await t.context.repositoryInstance.addTag(
       {
         attributes: {
-          entryContentType: 'jpeg', entryName: 'allo',
+          contentType: 'jpeg', name: 'allo',
           newAtt1: true, newAtt2: 46, newAtt3: 'sfsds'
         },
         tags: ['newTag1', 'newTag2']
@@ -277,7 +282,7 @@ test('[addTag] It must not add a duplicate tag', async (t) => {
     ),
     {
       attributes: {
-        entryContentType: 'jpeg', entryName: 'allo',
+        contentType: 'jpeg', name: 'allo',
         newAtt1: true, newAtt2: 46, newAtt3: 'sfsds'
       },
       tags: ['newTag1', 'newTag2']
@@ -290,7 +295,7 @@ test('[removeTag] It must remove tag correctly', async (t) => {
     await t.context.repositoryInstance.removeTag(
       {
         attributes: {
-          entryContentType: 'jpeg', entryName: 'allo',
+          contentType: 'jpeg', name: 'allo',
           newAtt1: true, newAtt2: 46, newAtt3: 'sfsds'
         },
         tags: ['newTag1', 'newTag2']
@@ -299,7 +304,7 @@ test('[removeTag] It must remove tag correctly', async (t) => {
     ),
     {
       attributes: {
-        entryContentType: 'jpeg', entryName: 'allo',
+        contentType: 'jpeg', name: 'allo',
         newAtt1: true, newAtt2: 46, newAtt3: 'sfsds'
       },
       tags: ['newTag1']
@@ -312,7 +317,7 @@ test('[addAttribute] It must add attribute correctly', async (t) => {
     await t.context.repositoryInstance.addAttribute(
       {
         attributes: {
-          entryContentType: 'jpeg', entryName: 'allo',
+          contentType: 'jpeg', name: 'allo',
           newAtt1: true, newAtt2: 46, newAtt3: 'sfsds'
         },
         tags: ['newTag1', 'newTag2']
@@ -322,7 +327,7 @@ test('[addAttribute] It must add attribute correctly', async (t) => {
     ),
     {
       attributes: {
-        entryContentType: 'jpeg', entryName: 'allo',
+        contentType: 'jpeg', name: 'allo',
         newAtt1: true, newAtt2: 46, newAtt3: 'sfsds', newAttr: true
       },
       tags: ['newTag1', 'newTag2']
@@ -335,7 +340,7 @@ test('[addAttribute] It must update value if attribute already exist', async (t)
     await t.context.repositoryInstance.addAttribute(
       {
         attributes: {
-          entryContentType: 'jpeg', entryName: 'allo',
+          contentType: 'jpeg', name: 'allo',
           newAtt1: true, newAtt2: 46, newAtt3: 'sfsds'
         },
         tags: ['newTag1', 'newTag2']
@@ -345,7 +350,7 @@ test('[addAttribute] It must update value if attribute already exist', async (t)
     ),
     {
       attributes: {
-        entryContentType: 'jpeg', entryName: 'allo',
+        contentType: 'jpeg', name: 'allo',
         newAtt1: 147, newAtt2: 46, newAtt3: 'sfsds'
       },
       tags: ['newTag1', 'newTag2']
@@ -358,7 +363,7 @@ test('[removeAttribute] It must remove attribute correctly', async (t) => {
     await t.context.repositoryInstance.removeAttribute(
       {
         attributes: {
-          entryContentType: 'jpeg', entryName: 'allo',
+          contentType: 'jpeg', name: 'allo',
           newAtt1: true, newAtt2: 46, newAtt3: 'sfsds'
         },
         tags: ['newTag1', 'newTag2']
@@ -367,7 +372,7 @@ test('[removeAttribute] It must remove attribute correctly', async (t) => {
     ),
     {
       attributes: {
-        entryContentType: 'jpeg', entryName: 'allo',
+        contentType: 'jpeg', name: 'allo',
         newAtt2: 46, newAtt3: 'sfsds'
       },
       tags: ['newTag1', 'newTag2']

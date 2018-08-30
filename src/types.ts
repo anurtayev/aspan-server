@@ -1,3 +1,5 @@
+import * as r from 'ramda'
+
 export type TEntryId = string
 export type TFileSystemPath = string
 export type TAttributeType = string | boolean | number
@@ -7,6 +9,9 @@ export enum EDerivedAttributes {
   name = 'name',
   contentType = 'contentType'
 }
+
+export const derivedAttributes: string[] = Object.keys(EDerivedAttributes)
+export const isDerivedAttribute = (attributeName: string): boolean => r.contains(attributeName, derivedAttributes)
 
 /**
  * Basic file system entry interface.
@@ -22,8 +27,8 @@ export interface IEntry {
 export interface IMetaData {
   tags?: string[]
   attributes: {
-    entryContentType: string,
-    entryName: string,
+    contentType: string,
+    name: string,
     [key: string]: TAttributeType
   }
 }

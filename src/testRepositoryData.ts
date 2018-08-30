@@ -18,6 +18,10 @@ export const entryLiterals: IEntryLiteral[] = [
       isFile: true
     },
     metaData: {
+      attributes: {
+        name: 'f2',
+        contentType: ''
+      },
       tags: ['receipts', 'electronics', 'NYtour']
     }
   },
@@ -29,6 +33,8 @@ export const entryLiterals: IEntryLiteral[] = [
     metaData: {
       tags: ['firstFolder'],
       attributes: {
+        name: 'fo1',
+        contentType: '',
         title: 'fatWedding',
         description: 'who-an!',
         lop: 'ka'
@@ -51,12 +57,6 @@ export const entryLiterals: IEntryLiteral[] = [
     entry: {
       id: '/fo1/sfo1',
       isFile: false
-    },
-    metaData: {
-      tags: ['empty'],
-      attributes: {
-        empty: true
-      }
     }
   },
   {
@@ -67,6 +67,8 @@ export const entryLiterals: IEntryLiteral[] = [
     metaData: {
       tags: ['notEmpty', 'NY', '2018', 'friends'],
       attributes: {
+        name: 'subFolder34',
+        contentType: '',
         empty: false,
         title: 'New Year celebration',
         description: 'At Zhukovs home',
@@ -81,6 +83,8 @@ export const entryLiterals: IEntryLiteral[] = [
     },
     metaData: {
       attributes: {
+        name: 'checkCT',
+        contentType: 'jpeg',
         description: 'Serega taking a picture'
       },
       tags: ['favorite', 'friends']
