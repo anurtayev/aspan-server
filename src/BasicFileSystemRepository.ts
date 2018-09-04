@@ -7,7 +7,7 @@ import {
   pathExists
 } from 'fs-extra'
 import { join, normalize } from 'path'
-import * as r from 'ramda'
+import * as _ from 'lodash'
 import {
   IRepositoryOptions,
   IRepository,
@@ -42,9 +42,9 @@ export default class implements IRepository {
   public getFolderEntries = async (id: TEntryId): Promise<IEntry[]> => {
     return await Promise.all(
       (await readdir(fsPath(id, this.options)))
-        .filter((entry) => entry !== this.options.metaFolderName)
-        .map((entry) => normalize(join(id, entry)))
-        .map((entry) => this.getEntry(entry))
+        .filter(entry => entry !== this.options.metaFolderName)
+        .map(entry => normalize(join(id, entry)))
+        .map(entry => this.getEntry(entry))
     )
   }
 
@@ -63,7 +63,7 @@ export default class implements IRepository {
         return resolve(
           Promise.all(
             files
-              .map((fileName) => cleanseWindowsPath(fileName.slice(this.options.path.length)))
+              .map(fileName => cleanseWindowsPath(fileName.slice(this.options.path.length)))
               .map(async (fileName: string) => this.getEntry(fileName))
           )
         )
@@ -92,27 +92,23 @@ export default class implements IRepository {
       await writeJson(metaFileName(id, this.options), {
         ...metaData,
         attributes: {
-          ...r.omit(derivedAttributes, metaData.attributes)
+          ..._.omit(metaData.attributes, derivedAttributes)
         }
       })
     }
   }
 
   public addTag = (metaData: IMetaData, tag: string): IMetaData => {
-    if ((metaData.tags as string[]).every((existingTag) => tag !== existingTag)) {
+    if ((metaData.tags as string[]).every(existingTag => tag !== existingTag)) {
       return { ...metaData, tags: [...metaData.tags as string[], tag] }
     }
     return metaData
   }
 
-  public removeTag = (metaData: IMetaData, tag: string): IMetaData => {
-    const position = (metaData.tags as string[]).findIndex((existingTag) => existingTag === tag)
-    if (position) {
-      return { ...metaData, tags: r.remove(position, 1, metaData.tags as string[]) }
-    }
-
-    return metaData
-  }
+  public removeTag = (metaData: IMetaData, tag: string): IMetaData => ({
+    ...metaData,
+    tags: _.without(metaData.tags as string[], tag)
+  })
 
   public addAttribute = (metaData: IMetaData, attribute: string, value: TAttributeType): IMetaData => {
     if (!isDerivedAttribute(attribute)) {
@@ -131,7 +127,7 @@ export default class implements IRepository {
         attributes: {
           contentType: metaData.attributes.contentType,
           name: metaData.attributes.name,
-          ...r.omit([attribute], metaData.attributes)
+          ..._.omit(metaData.attributes, [attribute])
         }
       }
     }

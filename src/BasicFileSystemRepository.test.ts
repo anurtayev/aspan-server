@@ -5,7 +5,7 @@ import * as shortid from 'shortid'
 import * as testRepository from './testRepository'
 import * as fs from 'fs-extra'
 import { metaFileName } from './repositoryPath'
-import * as r from 'ramda'
+import * as _ from 'lodash'
 
 import BasicFileSystemRepository from './BasicFileSystemRepository'
 import { IRepositoryOptions, IEntry, IRepository } from './types'
@@ -23,14 +23,16 @@ const compareArrays = (foundEntries: IEntry[], expectedEntries: IEntry[]): boole
 
   return foundEntries.every(
     (foundEntry: IEntry) => {
-      return Boolean(expectedEntries.find(
-        (expectedEntry) => expectedEntry.id === foundEntry.id && expectedEntry.isFile === foundEntry.isFile)
+      return Boolean(
+        expectedEntries.find(
+          elem => elem.id === foundEntry.id && elem.isFile === foundEntry.isFile
+        )
       )
     }
   )
 }
 
-test.beforeEach(async (t) => {
+test.beforeEach(async t => {
   const logSpy = sinon.spy()
   // console.log = logSpy
   t.context.logSpy = logSpy
@@ -44,11 +46,11 @@ test.beforeEach(async (t) => {
   t.context.repositoryInstance = new BasicFileSystemRepository(t.context.repositoryOptions)
 })
 
-test.afterEach.always(async (t) => {
+test.afterEach.always(async t => {
   await testRepository.erase(t.context.repositoryOptions)
 })
 
-test('[getEntry] It must return correct entry data', async (t) => {
+test('[getEntry] It must return correct entry data', async t => {
   t.deepEqual(
     await t.context.repositoryInstance.getEntry('/f2'),
     {
@@ -66,13 +68,13 @@ test('[getEntry] It must return correct entry data', async (t) => {
   )
 })
 
-test('[getEntry] It must throw when entry id does not exist', async (t) => {
+test('[getEntry] It must throw when entry id does not exist', async t => {
   await t.throwsAsync(async () => {
     await t.context.repositoryInstance.getEntry('/doesnotexits')
   })
 })
 
-test('[getFolderEntries] It must return correct entries data', async (t) => {
+test('[getFolderEntries] It must return correct entries data', async t => {
   const expectedEntries1: IEntry[] = [
     {
       id: '/fo1/sf1',
@@ -111,13 +113,13 @@ test('[getFolderEntries] It must return correct entries data', async (t) => {
   t.true(compareArrays(foundEntries2, expectedEntries2))
 })
 
-test('[getFolderEntries] It must throw when folder id does not exist', async (t) => {
+test('[getFolderEntries] It must throw when folder id does not exist', async t => {
   await t.throwsAsync(async () => {
     await t.context.repositoryInstance.getFolderEntries('/doesnotexits')
   })
 })
 
-test('[findEntries] It must find correct entries', async (t) => {
+test('[findEntries] It must find correct entries', async t => {
   const expectedEntries = [
     {
       id: '/f2',
@@ -136,20 +138,20 @@ test('[findEntries] It must find correct entries', async (t) => {
   t.true(compareArrays(foundEntries, expectedEntries))
 })
 
-test('[findEntries] It must return emtpy array of entries when there is no match', async (t) => {
+test('[findEntries] It must return emtpy array of entries when there is no match', async t => {
   const expectedEntries = []
   const foundEntries = await t.context.repositoryInstance.findEntries('/doesnotexist')
   t.true(compareArrays(foundEntries, expectedEntries))
 })
 
-test('[getMetaData] It must throw if entry id does not exist', async (t) => {
+test('[getMetaData] It must throw if entry id does not exist', async t => {
   const error: Error = await t.throwsAsync(async () => {
     await t.context.repositoryInstance.getMetaData('/doesnotexits')
   })
   t.true(error.message === 'entry does not exist')
 })
 
-test('[getMetaData] It must return correct meta data for a file', async (t) => {
+test('[getMetaData] It must return correct meta data for a file', async t => {
   t.deepEqual(
     await t.context.repositoryInstance.getMetaData('/fo1/subFolder34/checkCT.jpeg'),
     {
@@ -163,7 +165,7 @@ test('[getMetaData] It must return correct meta data for a file', async (t) => {
   )
 })
 
-test('[getMetaData] It must return correct meta data for folder', async (t) => {
+test('[getMetaData] It must return correct meta data for folder', async t => {
   t.deepEqual(
     await t.context.repositoryInstance.getMetaData('/fo1/subFolder34'),
     {
@@ -180,7 +182,7 @@ test('[getMetaData] It must return correct meta data for folder', async (t) => {
   )
 })
 
-test('[getMetaData] It must return meta data with derived attributes if no other info is available', async (t) => {
+test('[getMetaData] It must return meta data with derived attributes if no other info is available', async t => {
   t.deepEqual(
     await t.context.repositoryInstance.getMetaData('/f1'),
     {
@@ -192,7 +194,7 @@ test('[getMetaData] It must return meta data with derived attributes if no other
   )
 })
 
-test('[setMetaData] It must set meta data correctly. Derived attributes should be omitted', async (t) => {
+test('[setMetaData] It must set meta data correctly. Derived attributes should be omitted', async t => {
   const file = '/fo1/subFolder34/anotherExt_f2.jpg'
   const metaFile = metaFileName(file, t.context.repositoryOptions)
 
@@ -221,13 +223,13 @@ test('[setMetaData] It must set meta data correctly. Derived attributes should b
     {
       ...newMetaData,
       attributes: {
-        ...r.omit(['contentType', 'name'], newMetaData.attributes)
+        ..._.omit(newMetaData.attributes, ['contentType', 'name'])
       }
     }
   )
 })
 
-test('[setMetaData] It must not create a meta data file if there is no meta information', async (t) => {
+test('[setMetaData] It must not create a meta data file if there is no meta information', async t => {
   const file = '/fo1/subFolder34/anotherExt_f2.jpg'
   const metaFile = metaFileName(file, t.context.repositoryOptions)
 
@@ -246,7 +248,7 @@ test('[setMetaData] It must not create a meta data file if there is no meta info
   t.false(await fs.pathExists(metaFile))
 })
 
-test('[addTag] It must add tag correctly', async (t) => {
+test('[addTag] It must add tag correctly', async t => {
   t.deepEqual(
     await t.context.repositoryInstance.addTag(
       {
@@ -268,7 +270,7 @@ test('[addTag] It must add tag correctly', async (t) => {
   )
 })
 
-test('[addTag] It must not add a duplicate tag', async (t) => {
+test('[addTag] It must not add a duplicate tag', async t => {
   t.deepEqual(
     await t.context.repositoryInstance.addTag(
       {
@@ -290,7 +292,7 @@ test('[addTag] It must not add a duplicate tag', async (t) => {
   )
 })
 
-test('[removeTag] It must remove tag correctly', async (t) => {
+test.only('[removeTag] It must remove tag correctly', async t => {
   t.deepEqual(
     await t.context.repositoryInstance.removeTag(
       {
@@ -312,7 +314,7 @@ test('[removeTag] It must remove tag correctly', async (t) => {
   )
 })
 
-test('[addAttribute] It must add attribute correctly', async (t) => {
+test('[addAttribute] It must add attribute correctly', async t => {
   t.deepEqual(
     await t.context.repositoryInstance.addAttribute(
       {
@@ -335,7 +337,7 @@ test('[addAttribute] It must add attribute correctly', async (t) => {
   )
 })
 
-test('[addAttribute] It must update value if attribute already exist', async (t) => {
+test('[addAttribute] It must update value if attribute already exist', async t => {
   t.deepEqual(
     await t.context.repositoryInstance.addAttribute(
       {
@@ -358,7 +360,7 @@ test('[addAttribute] It must update value if attribute already exist', async (t)
   )
 })
 
-test('[removeAttribute] It must remove attribute correctly', async (t) => {
+test('[removeAttribute] It must remove attribute correctly', async t => {
   t.deepEqual(
     await t.context.repositoryInstance.removeAttribute(
       {

@@ -33,6 +33,6 @@ const server = new ApolloServer({ typeDefs, resolvers })
 
 server.listen().then(({ url }) => {
   console.log(`Server ready at ${url}`)
-}).catch((reason) => {
+}).catch(reason => {
   console.log(reason)
 })

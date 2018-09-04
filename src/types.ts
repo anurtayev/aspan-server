@@ -1,4 +1,4 @@
-import * as r from 'ramda'
+import * as _ from 'lodash'
 
 export type TEntryId = string
 export type TFileSystemPath = string
@@ -11,7 +11,7 @@ export enum EDerivedAttributes {
 }
 
 export const derivedAttributes: string[] = Object.keys(EDerivedAttributes)
-export const isDerivedAttribute = (attributeName: string): boolean => r.contains(attributeName, derivedAttributes)
+export const isDerivedAttribute = (attributeName: string): boolean => _.includes(derivedAttributes, attributeName)
 
 /**
  * Basic file system entry interface.

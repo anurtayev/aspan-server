@@ -21,7 +21,7 @@ export const create = async (options: IRepositoryOptions): Promise<void> => {
 
   await Promise.all(
     entryLiterals.map(
-      async (entryLiteral) => {
+      async entryLiteral => {
         if (entryLiteral.metaData) {
           await writeMetaData(options, entryLiteral)
         }
