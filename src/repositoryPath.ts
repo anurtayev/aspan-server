@@ -1,4 +1,4 @@
-import { TEntryId, TFileSystemPath, IRepositoryOptions } from './types'
+import { TEntryId, TFileSystemPath, IRepositoryOptions, TContentType } from './types'
 import { join, dirname, basename, extname } from 'path'
 
 export const cleanseWindowsPath =
@@ -22,5 +22,9 @@ export const entryName =
         basename(id, extname(id))
 
 export const entryContentType =
+    (id: TEntryId): TContentType =>
+        extname(id).slice(1) as TContentType
+
+export const parentId =
     (id: TEntryId): string =>
-        extname(id).slice(1)
+        dirname(id)

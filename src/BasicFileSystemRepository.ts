@@ -15,9 +15,7 @@ import {
   IMetaData,
   IEntry,
   TAttributeType,
-  isDerivedAttribute,
-  derivedAttributes,
-  EDerivedAttributes
+  TContentType
 } from './types'
 import * as glob from 'glob'
 import {
@@ -26,7 +24,8 @@ import {
   metaFileName,
   metaFolderName,
   entryContentType,
-  entryName
+  entryName,
+  parentId
 } from './repositoryPath'
 
 export default class implements IRepository {
@@ -34,17 +33,28 @@ export default class implements IRepository {
     private readonly options: IRepositoryOptions
   ) { }
 
-  public getEntry = async (id: TEntryId): Promise<IEntry> => ({
-    id: cleanseWindowsPath(id),
-    isFile: (await lstat(fsPath(id, this.options))).isFile()
-  })
+  public getEntry = async (id: TEntryId): Promise<IEntry | undefined> => {
+    const fsPathString = fsPath(id, this.options)
+    if (pathExists(fsPathString)) {
+      const stats = await lstat(fsPathString)
+      return {
+        id: cleanseWindowsPath(id),
+        isFile: stats.isFile(),
+        name: entryName(id),
+        metaData: await this.getMetaData(id),
+        parentId: parentId(id)
+      }
+    } else {
+      return undefined
+    }
+  }
 
   public getFolderEntries = async (id: TEntryId): Promise<IEntry[]> => {
     return await Promise.all(
       (await readdir(fsPath(id, this.options)))
         .filter(entry => entry !== this.options.metaFolderName)
         .map(entry => normalize(join(id, entry)))
-        .map(entry => this.getEntry(entry))
+        .map(entry => this.getEntry(entry) as Promise<IEntry>)
     )
   }
 
@@ -64,37 +74,46 @@ export default class implements IRepository {
           Promise.all(
             files
               .map(fileName => cleanseWindowsPath(fileName.slice(this.options.path.length)))
-              .map(async (fileName: string) => this.getEntry(fileName))
+              .map(async (fileName: string) => this.getEntry(fileName) as Promise<IEntry>)
           )
         )
       })
     })
   }
 
-  public getMetaData = async (id: TEntryId): Promise<IMetaData> => {
-    if (!await pathExists(fsPath(id, this.options))) {
-      throw new Error('entry does not exist')
+  public getContentType = (id: TEntryId): TContentType => entryContentType(id)
+
+  public getSize = async (id: TEntryId): Promise<number> => {
+    const fsPathString = fsPath(id, this.options)
+    const stats = await lstat(fsPathString)
+    return stats.size
+  }
+
+  public getMetaData = async (id: TEntryId): Promise<IMetaData | undefined> => {
+    const metaFileNameString = metaFileName(id, this.options)
+
+    if (await pathExists(metaFileNameString)) {
+      const metaData: IMetaData = await readJson(metaFileName(id, this.options))
+      if (
+        metaData &&
+        (
+          (metaData.attributes && metaData.attributes.size > 0) ||
+          (metaData.tags && metaData.tags.length > 0)
+        )
+      ) {
+        return metaData
+      } else {
+        return undefined
+      }
+    } else {
+      return undefined
     }
-
-    const metaFile = metaFileName(id, this.options)
-    const metaData: IMetaData = await pathExists(metaFile) ?
-      await readJson(metaFileName(id, this.options)) :
-      { attributes: {} }
-    metaData.attributes[EDerivedAttributes.name] = entryName(id)
-    metaData.attributes[EDerivedAttributes.contentType] = entryContentType(id)
-
-    return metaData
   }
 
   public setMetaData = async (id: TEntryId, metaData: IMetaData): Promise<void> => {
-    if (metaData.tags || Object.keys(metaData.attributes).length > 2) {
+    if (metaData.tags || metaData.attributes) {
       await ensureDir(metaFolderName(id, this.options))
-      await writeJson(metaFileName(id, this.options), {
-        ...metaData,
-        attributes: {
-          ..._.omit(metaData.attributes, derivedAttributes)
-        }
-      })
+      await writeJson(metaFileName(id, this.options), metaData)
     }
   }
 
@@ -111,27 +130,22 @@ export default class implements IRepository {
   })
 
   public addAttribute = (metaData: IMetaData, attribute: string, value: TAttributeType): IMetaData => {
-    if (!isDerivedAttribute(attribute)) {
-      const newAttribute = {}
-      newAttribute[attribute] = value
-      return { ...metaData, attributes: { ...metaData.attributes, ...newAttribute } }
+    if (attribute && value) {
+      const attributes: Map<string, TAttributeType> = metaData.attributes ? metaData.attributes : new Map()
+      attributes.set(attribute, value)
+      return { ...metaData, attributes }
+    } else {
+      return metaData
     }
-
-    return metaData
   }
 
   public removeAttribute = (metaData: IMetaData, attribute: string): IMetaData => {
-    if (!isDerivedAttribute(attribute)) {
-      return {
-        ...metaData,
-        attributes: {
-          contentType: metaData.attributes.contentType,
-          name: metaData.attributes.name,
-          ..._.omit(metaData.attributes, [attribute])
-        }
-      }
+    if (metaData.attributes && attribute) {
+      const attributes: Map<string, TAttributeType> = new Map(metaData.attributes)
+      attributes.delete(attribute)
+      return { ...metaData, attributes }
+    } else {
+      return metaData
     }
-
-    return metaData
   }
 }

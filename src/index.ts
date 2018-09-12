@@ -1,35 +1,29 @@
-import { ApolloServer, gql } from 'apollo-server'
+import { ApolloServer } from 'apollo-server'
 import * as dotenv from 'dotenv'
-// import * as assert from 'assert'
+import * as assert from 'assert'
+import { typeDefs } from './schema'
+import { resolvers } from './resolvers'
+import BasicFileSystemRepository from './BasicFileSystemRepository'
+import { IRepository } from './types'
 
 dotenv.config()
-// const path = process.env.REPOSITORY_PATH as string
-// const metaFolderName = process.env.META_FOLDER as string || '.metaFolder'
-// assert(path, 'configuration error: repository path is missing')
 
-const typeDefs = gql`
-  # Comments in GraphQL are defined with the hash (#) symbol.
+const path = process.env.REPOSITORY_PATH as string
+const metaFolderName = process.env.META_FOLDER as string || '.metaFolder'
+assert(path, 'configuration error: repository path is missing')
+const repository = new BasicFileSystemRepository({ metaFolderName, path })
 
-  # This "Book" type can be used in other type declarations.
-  type Book {
-    title: String
-    author: String
-  }
-
-  # The "Query" type is the root of all GraphQL queries.
-  # (A "Mutation" type will be covered later on.)
-  type Query {
-    books: [Book]
-  }
-`
-
-const resolvers = {
-  Query: {
-    books: () => ''
-  }
+export interface IContext {
+  repository: IRepository
 }
 
-const server = new ApolloServer({ typeDefs, resolvers })
+const context: IContext = { repository }
+
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  context
+})
 
 server.listen().then(({ url }) => {
   console.log(`Server ready at ${url}`)

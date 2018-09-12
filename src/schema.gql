@@ -1,0 +1,40 @@
+scalar IntString
+
+interface Entry {
+  id: String!
+  name: String!
+  tags: [String!]
+  attributes: [Attribute!]
+  parent: Folder
+}
+
+type Attribute {
+  name: String!
+  value: IntString!
+}
+
+type Folder implements Entry {
+  id: String!
+  name: String!
+  tags: [String!]
+  attributes: [Attribute!]
+  parent: Folder
+
+  children: [Entry!]
+}
+
+type File implements Entry {
+  id: String!
+  name: String!
+  tags: [String!]
+  attributes: [Attribute!]
+  parent: Folder
+
+  contentType: String
+  size: Int!
+}
+
+type Query {
+  getRootFolder: Folder!
+  getFolder(id: String): Folder
+}
