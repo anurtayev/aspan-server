@@ -4,7 +4,7 @@ import {
   readdir,
   readJson,
   writeJson,
-  pathExists
+  Stats
 } from 'fs-extra'
 import { join, normalize } from 'path'
 import * as _ from 'lodash'
@@ -27,36 +27,26 @@ import {
   entryName,
   parentId
 } from './repositoryPath'
+import { addTag, removeTag, addAttribute, removeAttribute } from './metaDataHelper'
 
 export default class implements IRepository {
   constructor(
     private readonly options: IRepositoryOptions
   ) { }
 
-  public getEntry = async (id: TEntryId): Promise<IEntry | undefined> => {
-    const fsPathString = fsPath(id, this.options)
-    if (pathExists(fsPathString)) {
-      const stats = await lstat(fsPathString)
-      return {
-        id: cleanseWindowsPath(id),
-        isFile: stats.isFile(),
-        name: entryName(id),
-        metaData: await this.getMetaData(id),
-        parentId: parentId(id)
-      }
-    } else {
-      return undefined
-    }
-  }
+  public getEntry = async (id: TEntryId): Promise<IEntry> => ({
+    id: cleanseWindowsPath(id),
+    isFile: (await this.stats(id)).isFile(),
+    name: entryName(id),
+    parentId: parentId(id)
+  })
 
-  public getFolderEntries = async (id: TEntryId): Promise<IEntry[]> => {
-    return await Promise.all(
-      (await readdir(fsPath(id, this.options)))
-        .filter(entry => entry !== this.options.metaFolderName)
-        .map(entry => normalize(join(id, entry)))
-        .map(entry => this.getEntry(entry) as Promise<IEntry>)
-    )
-  }
+  public getFolderEntries = async (id: TEntryId): Promise<IEntry[]> => await Promise.all(
+    (await readdir(fsPath(id, this.options)))
+      .filter(entry => entry !== this.options.metaFolderName)
+      .map(entry => normalize(join(id, entry)))
+      .map(entry => this.getEntry(entry) as Promise<IEntry>)
+  )
 
   public findEntries = async (pattern: string): Promise<IEntry[]> => {
     const options = {
@@ -84,68 +74,31 @@ export default class implements IRepository {
   public getContentType = (id: TEntryId): TContentType => entryContentType(id)
 
   public getSize = async (id: TEntryId): Promise<number> => {
-    const fsPathString = fsPath(id, this.options)
-    const stats = await lstat(fsPathString)
-    return stats.size
+    return (await lstat(fsPath(id, this.options))).size
   }
 
-  public getMetaData = async (id: TEntryId): Promise<IMetaData | undefined> => {
-    const metaFileNameString = metaFileName(id, this.options)
+  public getMetaData = async (id: TEntryId): Promise<IMetaData> => await readJson(metaFileName(id, this.options))
 
-    if (await pathExists(metaFileNameString)) {
-      const metaData: IMetaData = await readJson(metaFileName(id, this.options))
-      if (
-        metaData &&
-        (
-          (metaData.attributes && metaData.attributes.size > 0) ||
-          (metaData.tags && metaData.tags.length > 0)
-        )
-      ) {
-        return metaData
-      } else {
-        return undefined
-      }
-    } else {
-      return undefined
+  public setMetaData = async (id: TEntryId, metaData: IMetaData): Promise<IMetaData> => {
+    if (!metaData) {
+      throw new Error('setMetaData: metaData can not be null or undefined.')
     }
-  }
-
-  public setMetaData = async (id: TEntryId, metaData: IMetaData): Promise<void> => {
-    if (metaData.tags || metaData.attributes) {
-      await ensureDir(metaFolderName(id, this.options))
-      await writeJson(metaFileName(id, this.options), metaData)
-    }
-  }
-
-  public addTag = (metaData: IMetaData, tag: string): IMetaData => {
-    if ((metaData.tags as string[]).every(existingTag => tag !== existingTag)) {
-      return { ...metaData, tags: [...metaData.tags as string[], tag] }
-    }
+    await ensureDir(metaFolderName(id, this.options))
+    await writeJson(metaFileName(id, this.options), metaData)
     return metaData
   }
 
-  public removeTag = (metaData: IMetaData, tag: string): IMetaData => ({
-    ...metaData,
-    tags: _.without(metaData.tags as string[], tag)
-  })
+  public addTag = async (id: TEntryId, tag: string): Promise<IMetaData> =>
+    await this.setMetaData(id, addTag(await this.getMetaData(id), tag))
 
-  public addAttribute = (metaData: IMetaData, attribute: string, value: TAttributeType): IMetaData => {
-    if (attribute && value) {
-      const attributes: Map<string, TAttributeType> = metaData.attributes ? metaData.attributes : new Map()
-      attributes.set(attribute, value)
-      return { ...metaData, attributes }
-    } else {
-      return metaData
-    }
-  }
+  public removeTag = async (id: TEntryId, tag: string): Promise<IMetaData> =>
+    await this.setMetaData(id, removeTag(await this.getMetaData(id), tag))
 
-  public removeAttribute = (metaData: IMetaData, attribute: string): IMetaData => {
-    if (metaData.attributes && attribute) {
-      const attributes: Map<string, TAttributeType> = new Map(metaData.attributes)
-      attributes.delete(attribute)
-      return { ...metaData, attributes }
-    } else {
-      return metaData
-    }
-  }
+  public addAttribute = async (id: TEntryId, attribute: [string, TAttributeType]): Promise<IMetaData> =>
+    await this.setMetaData(id, addAttribute(await this.getMetaData(id), attribute))
+
+  public removeAttribute = async (id: TEntryId, attribute: string): Promise<IMetaData> =>
+    await this.setMetaData(id, removeAttribute(await this.getMetaData(id), attribute))
+
+  public stats = async (id: TEntryId): Promise<Stats> => await lstat(fsPath(id, this.options))
 }

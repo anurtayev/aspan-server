@@ -1,0 +1,82 @@
+import { IMetaData, TAttributeType } from './types'
+import * as lodash from 'lodash'
+
+export const addTag = (metaData: IMetaData, tag: string): IMetaData => {
+    if (!metaData) {
+        return { tags: [tag] }
+    }
+
+    if (!metaData.tags) {
+        return { ...metaData, tags: [tag] }
+    }
+
+    if (!Array.isArray(metaData.tags)) {
+        throw new Error('addTag: metaData.tags must be an array')
+    }
+
+    if (metaData.tags.some(_ => tag === _)) {
+        return metaData
+    }
+
+    return { ...metaData, tags: [...metaData.tags, tag] }
+}
+
+export const removeTag = (metaData: IMetaData, tag: string): IMetaData => {
+    if (!metaData) {
+        throw new Error('removeTag: metaData must be an instance of IMetaData')
+    }
+
+    if (!metaData.tags) {
+        return metaData
+    }
+
+    if (!Array.isArray(metaData.tags)) {
+        throw new Error('removeTag: metaData.tags must be an array')
+    }
+
+    return {
+        ...metaData,
+        tags: lodash.without(metaData.tags, tag)
+    }
+}
+
+export const addAttribute = (metaData: IMetaData, attribute: [string, TAttributeType]): IMetaData => {
+    if (!metaData) {
+        return { attributes: [attribute] }
+    }
+
+    if (!metaData.attributes) {
+        return { ...metaData, attributes: [attribute] }
+    }
+
+    if (!Array.isArray(metaData.attributes)) {
+        throw new Error('addAttribute: metaData.attributes must be an array')
+    }
+
+    const key = attribute[0]
+    if (metaData.attributes.some(_ => key === _[0])) {
+        return metaData
+    }
+
+    return { ...metaData, attributes: [...metaData.attributes, attribute] }
+}
+
+export const removeAttribute = (metaData: IMetaData, attribute: string): IMetaData => {
+    if (!metaData) {
+        throw new Error('removeAttribute: metaData must be an instance of IMetaData')
+    }
+
+    if (!metaData.attributes) {
+        return metaData
+    }
+
+    if (!Array.isArray(metaData.attributes)) {
+        throw new Error('removeAttribute: metaData.attributes must be an array')
+    }
+
+    const attributeIndex = metaData.attributes.findIndex(_ => _[0] === attribute)
+    return {
+        ...metaData,
+        attributes: [...metaData.attributes.slice(0, attributeIndex), ...metaData.attributes.slice(attributeIndex + 1)]
+    }
+}

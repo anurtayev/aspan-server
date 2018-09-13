@@ -1,3 +1,5 @@
+// tslint:disable:variable-name
+
 import { IEntry } from './types'
 import { IContext } from './index'
 import { IntStringBooleanInstance } from './IntStringBoolean'
@@ -6,15 +8,31 @@ export const resolvers = {
     IntStringBoolean: IntStringBooleanInstance,
 
     Query: {
-        // tslint:disable-next-line:variable-name
         getRootFolderEntries(_root, _args, { repository }: IContext) {
             const rootFolderPath = '/'
             return repository.getFolderEntries(rootFolderPath)
         },
 
-        // tslint:disable-next-line:variable-name
         getFolderEntries(_root, { id }, { repository }: IContext) {
             return repository.getFolderEntries(id)
+        }
+    },
+
+    Mutation: {
+        addTag(_root, { id, tag }, { repository }: IContext) {
+            return repository.addTag(id, tag)
+        },
+
+        removeTag(_root, { id, tag }, { repository }: IContext) {
+            return repository.removeTag(id, tag)
+        },
+
+        addAttribute(_root, { id, attribute }, { repository }: IContext) {
+            return repository.addAttribute(id, attribute)
+        },
+
+        removeAttribute(_root, { id, attributeKey }, { repository }: IContext) {
+            return repository.removeAttribute(id, attributeKey)
         }
     },
 
@@ -25,23 +43,24 @@ export const resolvers = {
             } else {
                 return 'Folder'
             }
+        },
+
+        metaData(entry: IEntry, _args, { repository }: IContext) {
+            return repository.getMetaData(entry.id)
         }
     },
 
     Folder: {
-        // tslint:disable-next-line:variable-name
         children(entry: IEntry, _args, { repository }: IContext) {
             return repository.getFolderEntries(entry.id)
         }
     },
 
     File: {
-        // tslint:disable-next-line:variable-name
         contentType(entry: IEntry, _args, { repository }: IContext) {
             return repository.getContentType(entry.id)
         },
 
-        // tslint:disable-next-line:variable-name
         size(entry: IEntry, _args, { repository }: IContext) {
             return repository.getSize(entry.id)
         }

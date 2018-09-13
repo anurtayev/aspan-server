@@ -13,9 +13,11 @@ export interface IRepositoryOptions {
   metaFolderName: string
 }
 
+export type TAttribute = [string, TAttributeType]
+
 export interface IMetaData {
   tags?: string[]
-  attributes?: Map<string, TAttributeType>
+  attributes?: TAttribute[]
 }
 
 /**
@@ -25,7 +27,6 @@ export interface IEntry {
   id: TEntryId
   isFile: boolean
   name: string
-  metaData?: IMetaData
   parentId: TEntryId
 }
 
@@ -38,20 +39,23 @@ export interface IFolder extends IEntry {
   children?: IEntry[]
 }
 
+/**
+ * All routines return undefined in case if entry doens't exist or error.
+ */
 export interface IRepository {
-  getEntry: (id: TEntryId) => Promise<IEntry | undefined>
-  getFolderEntries: (id: TEntryId) => Promise<IEntry[] | undefined>
+  getEntry: (id: TEntryId) => Promise<IEntry>
+  getFolderEntries: (id: TEntryId) => Promise<IEntry[]>
   findEntries: (pattern: string) => Promise<IEntry[]>
 
   getContentType: (id: TEntryId) => TContentType
   getSize: (id: TEntryId) => Promise<number>
 
-  setMetaData: (id: TEntryId, metaData: IMetaData) => Promise<void>
-  getMetaData: (id: TEntryId) => Promise<IMetaData | undefined>
+  getMetaData: (id: TEntryId) => Promise<IMetaData>
+  setMetaData: (id: TEntryId, metaData: IMetaData) => Promise<IMetaData>
 
-  addTag: (metaData: IMetaData, tag: string) => IMetaData
-  removeTag: (metaData: IMetaData, tag: string) => IMetaData
+  addTag: (id: TEntryId, tags: string) => Promise<IMetaData>
+  removeTag: (id: TEntryId, tag: string) => Promise<IMetaData>
 
-  addAttribute: (metaData: IMetaData, attribute: string, value: TAttributeType) => IMetaData
-  removeAttribute: (metaData: IMetaData, attribute: string) => IMetaData
+  addAttribute: (id: TEntryId, attribute: TAttribute) => Promise<IMetaData>
+  removeAttribute: (id: TEntryId, attributeKey: string) => Promise<IMetaData>
 }

@@ -4,14 +4,9 @@ export const typeDefs = gql`
 
 scalar IntStringBoolean
 
-type Attribute {
-  name: String!
-  value: IntStringBoolean!
-}
-
 type MetaData {
   tags: [String!]
-  attributes: [Attribute!]
+  attributes: [[IntStringBoolean!]!]
 }
 
 interface Entry {
@@ -19,6 +14,7 @@ interface Entry {
   name: String!
   metaData: MetaData
   parentId: String!
+  isFile: Boolean!
 }
 
 type Folder implements Entry {
@@ -26,6 +22,7 @@ type Folder implements Entry {
   name: String!
   metaData: MetaData
   parentId: String!
+  isFile: Boolean!
 
   children: [Entry!]
 }
@@ -35,14 +32,22 @@ type File implements Entry {
   name: String!
   metaData: MetaData
   parentId: String!
+  isFile: Boolean!
 
-  contentType: String
+  contentType: String!
   size: Int!
 }
 
 type Query {
   getRootFolderEntries: [Entry!]
   getFolderEntries(id: String): [Entry!]
+}
+
+type Mutation {
+  addTag(id: String, tag: String!): MetaData
+  removeTag(id: String, tag: String!): MetaData
+  addAttribute(id: String, attribute: [IntStringBoolean!]!): MetaData
+  removeAttribute(id: String, attributeKey: String!): MetaData
 }
 
 `
