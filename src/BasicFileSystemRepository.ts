@@ -15,8 +15,7 @@ import {
   TEntryId,
   IMetaData,
   IEntry,
-  TAttributeType,
-  TContentType
+  TAttributeType
 } from './types'
 import * as glob from 'glob'
 import {
@@ -28,7 +27,7 @@ import {
   entryName,
   parentId
 } from './repositoryPath'
-import { addTag, removeTag, addAttribute, removeAttribute } from './metaDataHelper'
+import { addTag, removeTag, addAttribute, removeAttribute } from './metaDataHelpers'
 
 export default class implements IRepository {
   constructor(
@@ -72,7 +71,7 @@ export default class implements IRepository {
     })
   }
 
-  public getContentType = (id: TEntryId): TContentType => entryContentType(id)
+  public getContentType = (id: TEntryId): string => entryContentType(id)
 
   public getSize = async (id: TEntryId): Promise<number> => {
     return (await lstat(fsPath(id, this.options))).size
@@ -88,11 +87,10 @@ export default class implements IRepository {
   }
 
   public setMetaData = async (id: TEntryId, metaData: IMetaData): Promise<IMetaData> => {
-    if (!metaData) {
-      throw new Error('setMetaData: metaData can not be null or undefined.')
+    if (metaData && (metaData.attributes || metaData.tags)) {
+      await ensureDir(metaFolderName(id, this.options))
+      await writeJson(metaFileName(id, this.options), metaData)
     }
-    await ensureDir(metaFolderName(id, this.options))
-    await writeJson(metaFileName(id, this.options), metaData)
     return metaData
   }
 

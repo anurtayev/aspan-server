@@ -7,13 +7,13 @@ import {
   writeJson
 } from 'fs-extra'
 import { dirname } from 'path'
-import { entryLiterals, IEntryLiteral } from './testRepositoryData'
-import { IRepositoryOptions } from './types'
+import { entryLiterals } from './testRepositoryData'
+import { IRepositoryOptions, IMetaData } from './types'
 
-const writeMetaData = async (options: IRepositoryOptions, entryLiteral: IEntryLiteral) => {
-  const metaFile = metaFileName(entryLiteral.entry.id, options)
+const writeMetaData = async (options: IRepositoryOptions, id: string, metaData: IMetaData) => {
+  const metaFile = metaFileName(id, options)
   await ensureDir(dirname(metaFile))
-  await writeJson(metaFile, entryLiteral.metaData)
+  await writeJson(metaFile, metaData)
 }
 
 export const create = async (options: IRepositoryOptions): Promise<void> => {
@@ -22,12 +22,16 @@ export const create = async (options: IRepositoryOptions): Promise<void> => {
   await Promise.all(
     entryLiterals.map(
       async entryLiteral => {
-        if (entryLiteral.metaData) {
-          await writeMetaData(options, entryLiteral)
+        if (entryLiteral.tags || entryLiteral.attributes) {
+          await writeMetaData(
+            options,
+            entryLiteral.id,
+            { tags: entryLiteral.tags, attributes: entryLiteral.attributes }
+          )
         }
 
-        const expandedId = fsPath(entryLiteral.entry.id, options)
-        if (entryLiteral.entry.isFile) {
+        const expandedId = fsPath(entryLiteral.id, options)
+        if (entryLiteral.isFile) {
           await ensureDir(dirname(expandedId))
           await ensureFile(expandedId)
         } else {

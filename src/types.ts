@@ -3,7 +3,6 @@ import * as _ from 'lodash'
 export type TEntryId = string
 export type TFileSystemPath = string
 export type TAttributeType = string | boolean | number
-export type TContentType = 'jpeg' | 'jpg'
 
 export interface IRepositoryOptions {
   /**
@@ -31,7 +30,7 @@ export interface IEntry {
 }
 
 export interface IFile extends IEntry {
-  contentType: TContentType
+  contentType: string
   size: number
 }
 
@@ -47,7 +46,7 @@ export interface IRepository {
   getFolderEntries: (id: TEntryId) => Promise<IEntry[]>
   findEntries: (pattern: string) => Promise<IEntry[]>
 
-  getContentType: (id: TEntryId) => TContentType
+  getContentType: (id: TEntryId) => string
   getSize: (id: TEntryId) => Promise<number>
 
   getMetaData: (id: TEntryId) => Promise<IMetaData | null>
