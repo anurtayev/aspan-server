@@ -2,10 +2,10 @@
 
 import { IEntry } from './types'
 import { IContext } from './index'
-import { IntStringBooleanInstance } from './IntStringBoolean'
+import { NumberStringBooleanInstance } from './NumberStringBoolean'
 
 export const resolvers = {
-    IntStringBoolean: IntStringBooleanInstance,
+    NumberStringBoolean: NumberStringBooleanInstance,
 
     Query: {
         getRootFolderEntries(_root, _args, { repository }: IContext) {
@@ -43,20 +43,24 @@ export const resolvers = {
             } else {
                 return 'Folder'
             }
-        },
-
-        metaData(entry: IEntry, _args, { repository }: IContext) {
-            return repository.getMetaData(entry.id)
         }
     },
 
     Folder: {
+        metaData(entry: IEntry, _args, { repository }: IContext) {
+            return repository.getMetaData(entry.id)
+        },
+
         children(entry: IEntry, _args, { repository }: IContext) {
             return repository.getFolderEntries(entry.id)
         }
     },
 
     File: {
+        metaData(entry: IEntry, _args, { repository }: IContext) {
+            return repository.getMetaData(entry.id)
+        },
+
         contentType(entry: IEntry, _args, { repository }: IContext) {
             return repository.getContentType(entry.id)
         },

@@ -2,11 +2,11 @@ import { gql } from 'apollo-server'
 
 export const typeDefs = gql`
 
-scalar IntStringBoolean
+scalar NumberStringBoolean
 
 type MetaData {
   tags: [String!]
-  attributes: [[IntStringBoolean!]!]
+  attributes: [[NumberStringBoolean!]!]
 }
 
 interface Entry {
@@ -46,7 +46,7 @@ type Query {
 type Mutation {
   addTag(id: String, tag: String!): MetaData
   removeTag(id: String, tag: String!): MetaData
-  addAttribute(id: String, attribute: [IntStringBoolean!]!): MetaData
+  addAttribute(id: String, attribute: [NumberStringBoolean!]!): MetaData
   removeAttribute(id: String, attributeKey: String!): MetaData
 }
 

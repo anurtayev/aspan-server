@@ -4,7 +4,8 @@ import {
   readdir,
   readJson,
   writeJson,
-  Stats
+  Stats,
+  pathExists
 } from 'fs-extra'
 import { join, normalize } from 'path'
 import * as _ from 'lodash'
@@ -45,7 +46,7 @@ export default class implements IRepository {
     (await readdir(fsPath(id, this.options)))
       .filter(entry => entry !== this.options.metaFolderName)
       .map(entry => normalize(join(id, entry)))
-      .map(entry => this.getEntry(entry) as Promise<IEntry>)
+      .map(async entry => await this.getEntry(entry))
   )
 
   public findEntries = async (pattern: string): Promise<IEntry[]> => {
@@ -77,7 +78,14 @@ export default class implements IRepository {
     return (await lstat(fsPath(id, this.options))).size
   }
 
-  public getMetaData = async (id: TEntryId): Promise<IMetaData> => await readJson(metaFileName(id, this.options))
+  public getMetaData = async (id: TEntryId): Promise<IMetaData | null> => {
+    const metaFile = metaFileName(id, this.options)
+    if (await pathExists(metaFile)) {
+      return await readJson(metaFile)
+    } else {
+      return null
+    }
+  }
 
   public setMetaData = async (id: TEntryId, metaData: IMetaData): Promise<IMetaData> => {
     if (!metaData) {

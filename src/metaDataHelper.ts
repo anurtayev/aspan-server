@@ -1,7 +1,7 @@
 import { IMetaData, TAttributeType } from './types'
 import * as lodash from 'lodash'
 
-export const addTag = (metaData: IMetaData, tag: string): IMetaData => {
+export const addTag = (metaData: IMetaData | null, tag: string): IMetaData => {
     if (!metaData) {
         return { tags: [tag] }
     }
@@ -21,7 +21,7 @@ export const addTag = (metaData: IMetaData, tag: string): IMetaData => {
     return { ...metaData, tags: [...metaData.tags, tag] }
 }
 
-export const removeTag = (metaData: IMetaData, tag: string): IMetaData => {
+export const removeTag = (metaData: IMetaData | null, tag: string): IMetaData => {
     if (!metaData) {
         throw new Error('removeTag: metaData must be an instance of IMetaData')
     }
@@ -40,7 +40,7 @@ export const removeTag = (metaData: IMetaData, tag: string): IMetaData => {
     }
 }
 
-export const addAttribute = (metaData: IMetaData, attribute: [string, TAttributeType]): IMetaData => {
+export const addAttribute = (metaData: IMetaData | null, attribute: [string, TAttributeType]): IMetaData => {
     if (!metaData) {
         return { attributes: [attribute] }
     }
@@ -61,7 +61,7 @@ export const addAttribute = (metaData: IMetaData, attribute: [string, TAttribute
     return { ...metaData, attributes: [...metaData.attributes, attribute] }
 }
 
-export const removeAttribute = (metaData: IMetaData, attribute: string): IMetaData => {
+export const removeAttribute = (metaData: IMetaData | null, attribute: string): IMetaData => {
     if (!metaData) {
         throw new Error('removeAttribute: metaData must be an instance of IMetaData')
     }

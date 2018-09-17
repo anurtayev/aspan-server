@@ -50,7 +50,7 @@ export interface IRepository {
   getContentType: (id: TEntryId) => TContentType
   getSize: (id: TEntryId) => Promise<number>
 
-  getMetaData: (id: TEntryId) => Promise<IMetaData>
+  getMetaData: (id: TEntryId) => Promise<IMetaData | null>
   setMetaData: (id: TEntryId, metaData: IMetaData) => Promise<IMetaData>
 
   addTag: (id: TEntryId, tags: string) => Promise<IMetaData>
