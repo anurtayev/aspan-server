@@ -1,53 +1,60 @@
-import { IEntry, IMetaData } from './types'
+import { TEntry, IMetaData } from './types'
 
-export const entryLiterals: Array<Pick<IEntry, 'id' | 'isFile'> & IMetaData> = [
+export const entryLiterals: Array<Pick<TEntry, 'id' | 'type'> & IMetaData> = [
   {
     id: '/f1',
-    isFile: true
+    type: 'file'
   },
   {
     id: '/f2',
-    isFile: true,
+    type: 'file',
     tags: ['receipts', 'electronics', 'NYtour']
   },
   {
     id: '/fo1',
-    isFile: false,
+    type: 'folder',
     tags: ['firstFolder'],
-    attributes: [['title', 'fatWedding'], ['description', 'who-an!'], ['lop', 'ka']]
+    attributes: [
+      ['title', 'fatWedding'],
+      ['description', 'who-an!'],
+      ['lop', 'ka']
+    ]
   },
   {
     id: '/fo1/sf1',
-    isFile: true
+    type: 'folder'
   },
   {
     id: '/fo1/sf2',
-    isFile: true
+    type: 'folder'
   },
   {
     id: '/fo1/sfo1',
-    isFile: false
+    type: 'folder'
   },
   {
     id: '/fo1/subFolder34',
-    isFile: false,
+    type: 'folder',
     tags: ['notEmpty', 'NY', '2018', 'friends'],
     attributes: [
-      ['empty', false], ['title', 'New Year celebration'], ['description', 'At Zhukovs home'], ['numberOfFiles', 45]
+      ['empty', false],
+      ['title', 'New Year celebration'],
+      ['description', 'At Zhukovs home'],
+      ['numberOfFiles', 45]
     ]
   },
   {
     id: '/fo1/subFolder34/checkCT.jpeg',
-    isFile: true,
+    type: 'file',
     attributes: [['description', 'Serega taking a picture']],
     tags: ['favorite', 'friends']
   },
   {
     id: '/fo1/subFolder34/anotherExt_f2.jpg',
-    isFile: true
+    type: 'file'
   },
   {
     id: '/fo1/subFolder34/gifFile.gif',
-    isFile: true
+    type: 'file'
   }
 ]

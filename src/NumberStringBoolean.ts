@@ -1,8 +1,11 @@
 import { GraphQLScalarType, Kind } from 'graphql'
+import { TAttributeType } from './types'
 
-const coerceNumberStringBoolean = value => {
+const coerceNumberStringBoolean = (value: TAttributeType) => {
   if (Array.isArray(value)) {
-    throw new TypeError(`IntString cannot represent an array value: [${String(value)}]`)
+    throw new TypeError(
+      `IntString cannot represent an array value: [${String(value)}]`
+    )
   }
   const type = typeof value
   if (type === 'boolean' || type === 'number' || type === 'string') {

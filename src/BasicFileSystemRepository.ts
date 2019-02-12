@@ -14,7 +14,7 @@ import {
   IRepository,
   TEntryId,
   IMetaData,
-  IEntry,
+  TEntry,
   TAttributeType
 } from './types'
 import * as glob from 'glob'
@@ -27,34 +27,53 @@ import {
   entryName,
   parentId
 } from './repositoryPath'
-import { addTag, removeTag, addAttribute, removeAttribute } from './metaDataHelpers'
+import {
+  addTag,
+  removeTag,
+  addAttribute,
+  removeAttribute
+} from './metaDataHelpers'
 
 export default class implements IRepository {
-  constructor(
-    private readonly options: IRepositoryOptions
-  ) { }
+  constructor(private readonly options: IRepositoryOptions) {}
 
-  public getEntry = async (id: TEntryId): Promise<IEntry> => ({
-    id: cleanseWindowsPath(id),
-    isFile: (await this.stats(id)).isFile(),
-    name: entryName(id),
-    parentId: parentId(id)
-  })
+  public getEntry = async (id: TEntryId): Promise<TEntry> => {
+    const stat = await lstat(fsPath(id, this.options))
+    const cleansedId = cleanseWindowsPath(id)
+    const cleansedParentId = cleanseWindowsPath(parentId(id))
 
-  public getFolderEntries = async (id: TEntryId): Promise<IEntry[]> => await Promise.all(
-    (await readdir(fsPath(id, this.options)))
-      .filter(entry => entry !== this.options.metaFolderName)
-      .map(entry => normalize(join(id, entry)))
-      .map(async entry => await this.getEntry(entry))
-  )
+    return stat.isFile()
+      ? {
+          id: cleansedId,
+          type: 'file',
+          name: entryName(id),
+          parentId: cleansedParentId,
+          contentType: entryContentType(id),
+          size: stat.size
+        }
+      : {
+          id: cleansedId,
+          type: 'folder',
+          name: entryName(id),
+          parentId: cleansedParentId
+        }
+  }
 
-  public findEntries = async (pattern: string): Promise<IEntry[]> => {
+  public getFolderEntries = async (id: TEntryId): Promise<TEntry[]> =>
+    await Promise.all(
+      (await readdir(fsPath(id, this.options)))
+        .filter(entryId => entryId !== this.options.metaFolderName)
+        .map(entryId => normalize(join(id, entryId)))
+        .map(async entryId => await this.getEntry(entryId))
+    )
+
+  public findEntries = async (pattern: string): Promise<TEntry[]> => {
     const options = {
       cwd: this.options.path,
       root: this.options.path
     }
 
-    return new Promise<IEntry[]>((resolve, reject) => {
+    return new Promise<TEntry[]>((resolve, reject) => {
       glob(pattern, options, (error, files) => {
         if (error) {
           return reject(error)
@@ -63,8 +82,13 @@ export default class implements IRepository {
         return resolve(
           Promise.all(
             files
-              .map(fileName => cleanseWindowsPath(fileName.slice(this.options.path.length)))
-              .map(async (fileName: string) => this.getEntry(fileName) as Promise<IEntry>)
+              .map(fileName =>
+                cleanseWindowsPath(fileName.slice(this.options.path.length))
+              )
+              .map(
+                async (fileName: string) =>
+                  this.getEntry(fileName) as Promise<TEntry>
+              )
           )
         )
       })
@@ -86,7 +110,10 @@ export default class implements IRepository {
     }
   }
 
-  public setMetaData = async (id: TEntryId, metaData: IMetaData): Promise<IMetaData> => {
+  public setMetaData = async (
+    id: TEntryId,
+    metaData: IMetaData
+  ): Promise<IMetaData> => {
     if (metaData && (metaData.attributes || metaData.tags)) {
       await ensureDir(metaFolderName(id, this.options))
       await writeJson(metaFileName(id, this.options), metaData)
@@ -100,11 +127,24 @@ export default class implements IRepository {
   public removeTag = async (id: TEntryId, tag: string): Promise<IMetaData> =>
     await this.setMetaData(id, removeTag(await this.getMetaData(id), tag))
 
-  public addAttribute = async (id: TEntryId, attribute: [string, TAttributeType]): Promise<IMetaData> =>
-    await this.setMetaData(id, addAttribute(await this.getMetaData(id), attribute))
+  public addAttribute = async (
+    id: TEntryId,
+    attribute: [string, TAttributeType]
+  ): Promise<IMetaData> =>
+    await this.setMetaData(
+      id,
+      addAttribute(await this.getMetaData(id), attribute)
+    )
 
-  public removeAttribute = async (id: TEntryId, attribute: string): Promise<IMetaData> =>
-    await this.setMetaData(id, removeAttribute(await this.getMetaData(id), attribute))
+  public removeAttribute = async (
+    id: TEntryId,
+    attribute: string
+  ): Promise<IMetaData> =>
+    await this.setMetaData(
+      id,
+      removeAttribute(await this.getMetaData(id), attribute)
+    )
 
-  public stats = async (id: TEntryId): Promise<Stats> => await lstat(fsPath(id, this.options))
+  public stats = async (id: TEntryId): Promise<Stats> =>
+    await lstat(fsPath(id, this.options))
 }
