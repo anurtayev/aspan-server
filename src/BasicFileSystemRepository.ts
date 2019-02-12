@@ -95,12 +95,6 @@ export default class implements IRepository {
     })
   }
 
-  public getContentType = (id: TEntryId): string => entryContentType(id)
-
-  public getSize = async (id: TEntryId): Promise<number> => {
-    return (await lstat(fsPath(id, this.options))).size
-  }
-
   public getMetaData = async (id: TEntryId): Promise<IMetaData | null> => {
     const metaFile = metaFileName(id, this.options)
     if (await pathExists(metaFile)) {
