@@ -10,7 +10,8 @@ export interface IRepositoryOptions {
    * File system location when repository is located.
    */
   path: string
-  metaFolderName: string
+  metaFolder: string
+  thumbsPrefix: string
 }
 
 export type TAttribute = [string, TAttributeType]
@@ -18,6 +19,8 @@ export type TAttribute = [string, TAttributeType]
 export interface IMetaData {
   tags?: string[]
   attributes?: TAttribute[]
+  title?: string
+  description?: string
 }
 
 /**
@@ -58,4 +61,7 @@ export interface IRepository {
 
   addAttribute: (id: TEntryId, attribute: TAttribute) => Promise<IMetaData>
   removeAttribute: (id: TEntryId, attributeKey: string) => Promise<IMetaData>
+
+  makeThumb: (id: TEntryId) => Promise<void>
+  makeAllThumbs: () => Promise<void>
 }

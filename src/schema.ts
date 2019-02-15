@@ -6,6 +6,8 @@ export const typeDefs = gql`
   type MetaData {
     tags: [String!]
     attributes: [[NumberStringBoolean!]!]
+    title: String
+    description: String
   }
 
   interface Entry {
@@ -35,6 +37,8 @@ export const typeDefs = gql`
 
     contentType: String!
     size: Int!
+    image: String!
+    thumbImage: String
   }
 
   type Query {

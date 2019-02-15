@@ -21,11 +21,12 @@ import * as glob from 'glob'
 import {
   cleanseWindowsPath,
   fsPath,
-  metaFileName,
-  metaFolderName,
+  metaFile,
+  metaFolder,
   entryContentType,
   entryName,
-  parentId
+  parentId,
+  thumbFile
 } from './repositoryPath'
 import {
   addTag,
@@ -33,23 +34,24 @@ import {
   addAttribute,
   removeAttribute
 } from './metaDataHelpers'
+import * as sharp from 'sharp'
 
 export default class implements IRepository {
   constructor(private readonly options: IRepositoryOptions) {}
 
   public getEntry = async (id: TEntryId): Promise<TEntry> => {
-    const stat = await lstat(fsPath(id, this.options))
+    const stats = await this.stats(id)
     const cleansedId = cleanseWindowsPath(id)
     const cleansedParentId = cleanseWindowsPath(parentId(id))
 
-    return stat.isFile()
+    return stats.isFile()
       ? {
           id: cleansedId,
           type: 'file',
           name: entryName(id),
           parentId: cleansedParentId,
           contentType: entryContentType(id),
-          size: stat.size
+          size: stats.size
         }
       : {
           id: cleansedId,
@@ -62,7 +64,7 @@ export default class implements IRepository {
   public getFolderEntries = async (id: TEntryId): Promise<TEntry[]> =>
     await Promise.all(
       (await readdir(fsPath(id, this.options)))
-        .filter(entryId => entryId !== this.options.metaFolderName)
+        .filter(entryId => entryId !== this.options.metaFolder)
         .map(entryId => normalize(join(id, entryId)))
         .map(async entryId => await this.getEntry(entryId))
     )
@@ -96,9 +98,9 @@ export default class implements IRepository {
   }
 
   public getMetaData = async (id: TEntryId): Promise<IMetaData | null> => {
-    const metaFile = metaFileName(id, this.options)
-    if (await pathExists(metaFile)) {
-      return await readJson(metaFile)
+    const metaFileFSPath = fsPath(metaFile(id, this.options), this.options)
+    if (await pathExists(metaFileFSPath)) {
+      return await readJson(metaFileFSPath)
     } else {
       return null
     }
@@ -109,8 +111,8 @@ export default class implements IRepository {
     metaData: IMetaData
   ): Promise<IMetaData> => {
     if (metaData && (metaData.attributes || metaData.tags)) {
-      await ensureDir(metaFolderName(id, this.options))
-      await writeJson(metaFileName(id, this.options), metaData)
+      await ensureDir(metaFolder(id, this.options))
+      await writeJson(metaFile(id, this.options), metaData)
     }
     return metaData
   }
@@ -139,6 +141,56 @@ export default class implements IRepository {
       removeAttribute(await this.getMetaData(id), attribute)
     )
 
-  public stats = async (id: TEntryId): Promise<Stats> =>
-    await lstat(fsPath(id, this.options))
+  private stats = async (id: TEntryId): Promise<Stats> =>
+    lstat(fsPath(id, this.options))
+
+  public makeThumb = async (id: TEntryId) => {
+    await ensureDir(metaFolder(id, this.options))
+    sharp(fsPath(id, this.options))
+      .resize(200, 200)
+      .toFile(thumbFile(id, this.options))
+  }
+
+  public makeAllThumbs = async () => {
+    try {
+      await Promise.all(
+        (await this.getAllFolderIds()).map(id => this.makeThumb(id))
+      )
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  public getAllFolderIds = async (path: TEntryId = '/'): Promise<any> => {
+    console.log('1')
+    console.log(fsPath(path, this.options))
+    console.log(
+      JSON.stringify(await readdir(fsPath(path, this.options)), null, 2)
+    )
+
+    const files = (await readdir(fsPath(path, this.options))).map(f =>
+      join(this.options.path, f)
+    )
+    console.log(JSON.stringify(files, null, 2))
+
+    const stats = await Promise.all(files.map(f => this.stats(f)))
+
+    const expanded = await Promise.all(
+      files.map(async (entry, index) =>
+        stats[index].isDirectory() ? await this.getAllFolderIds(entry) : entry
+      )
+    )
+
+    /**
+     * 
+     const flatAndFilter = r
+     .flatten(expanded)
+     .filter(f => ctx.repoExtensions.some(_ => _ === extname(f).toLowerCase()))
+     .filter(f => !basename(f).startsWith('thumb_'))
+     .map(cleanseWindowsPath)
+     return flatAndFilter
+     */
+
+    return expanded
+  }
 }

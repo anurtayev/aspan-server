@@ -4,8 +4,9 @@ import { join } from 'path'
 import * as shortid from 'shortid'
 import * as testRepository from './testRepository'
 import * as fs from 'fs-extra'
-import { metaFileName } from './repositoryPath'
+import { metaFile } from './repositoryPath'
 import * as _ from 'lodash'
+import { options } from './util'
 
 import BasicFileSystemRepository from './BasicFileSystemRepository'
 import { IRepositoryOptions, TEntry, IRepository, IMetaData } from './types'
@@ -39,8 +40,8 @@ test.beforeEach(async t => {
   t.context.logSpy = logSpy
 
   t.context.repositoryOptions = {
-    path: join(process.env.TEMP as string, shortid.generate()),
-    metaFolderName: '.metaFolder'
+    ...options,
+    path: join(process.env.TEMP as string, shortid.generate())
   }
 
   await testRepository.create(t.context.repositoryOptions)
@@ -223,7 +224,7 @@ test('[getMetaData] It must return correct meta data for folder', async t => {
 
 test('[setMetaData] It must set meta data correctly', async t => {
   const file = '/fo1/subFolder34/anotherExt_f2.jpg'
-  const metaFile = metaFileName(file, t.context.repositoryOptions)
+  const metaFileStr = metaFile(file, t.context.repositoryOptions)
 
   const newMetaData: IMetaData = {
     attributes: [['newAtt1', true], ['newAtt2', 46], ['newAtt3', 'sfsds]']],
@@ -235,16 +236,16 @@ test('[setMetaData] It must set meta data correctly', async t => {
     newMetaData
   )
 
-  t.true(await fs.pathExists(metaFile))
+  t.true(await fs.pathExists(metaFileStr))
 
-  const readMetaData = await fs.readJson(metaFile)
+  const readMetaData = await fs.readJson(metaFileStr)
 
   t.deepEqual(readMetaData, newMetaData)
 })
 
 test('[setMetaData] It must not create a meta data file if there is no meta information', async t => {
   const file = '/fo1/subFolder34/anotherExt_f2.jpg'
-  const metaFile = metaFileName(file, t.context.repositoryOptions)
+  const metaFileStr = metaFile(file, t.context.repositoryOptions)
   const newMetaData: IMetaData = {}
 
   await t.context.repositoryInstance.setMetaData(
@@ -252,5 +253,5 @@ test('[setMetaData] It must not create a meta data file if there is no meta info
     newMetaData
   )
 
-  t.false(await fs.pathExists(metaFile))
+  t.false(await fs.pathExists(metaFileStr))
 })
