@@ -105,8 +105,8 @@ export default class implements IRepository {
     metaData: IMetaData
   ): Promise<IMetaData> => {
     if (metaData && (metaData.attributes || metaData.tags)) {
-      await ensureDir(this.metaFolder(id))
-      await writeJson(this.metaFile(id), metaData)
+      await ensureDir(this.fsPath(this.metaFolder(id)))
+      await writeJson(this.fsPath(this.metaFile(id)), metaData)
     }
     return metaData
   }

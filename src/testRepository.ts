@@ -1,5 +1,4 @@
 import { ensureFile, ensureDir } from 'fs-extra'
-import { dirname } from 'path'
 import { TChildren } from './testRepositoryData'
 import { TEntryId, IRepository } from './types'
 
@@ -10,9 +9,10 @@ export const createChildren = async (
 ): Promise<void> => {
   await Promise.all(
     entries.map(async entry => {
-      const entryId = `${folder}/${entry}${
+      const entryId = `${folder === '/' ? '' : folder}/${entry.name}${
         entry.type === 'file' ? entry.contentType : ''
       }`
+      console.log(`entryId: ${entryId}`)
 
       if (entry.meta && (entry.meta.tags || entry.meta.attributes)) {
         await repo.setMetaData(entryId, {
@@ -23,12 +23,11 @@ export const createChildren = async (
 
       const expandedId = repo.fsPath(entryId)
       if (entry.type === 'file') {
-        await ensureDir(dirname(expandedId))
         await ensureFile(expandedId)
       } else {
         await ensureDir(expandedId)
         if (entry.children) {
-          await createChildren(repo, expandedId, entry.children)
+          await createChildren(repo, entryId, entry.children)
         }
       }
     })

@@ -19,7 +19,7 @@ export const tstEntries: TChildren = [
   {
     name: 'f2',
     type: 'file',
-    contentType: '.jpg',
+    contentType: '.gif',
     meta: { tags: ['receipts', 'electronics', 'NYtour'] }
   },
   {
