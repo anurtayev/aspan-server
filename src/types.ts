@@ -64,4 +64,15 @@ export interface IRepository {
 
   makeThumb: (id: TEntryId) => Promise<void>
   makeAllThumbs: () => Promise<void>
+
+  empty: () => Promise<void>
+
+  fsPath: (id: TEntryId) => TFileSystemPath
+  cleanseWindowsPath: (id: TEntryId) => TEntryId
+  metaFolder: (id: TEntryId) => TEntryId
+  metaFile: (id: TEntryId) => TEntryId
+  entryName: (id: TEntryId) => string
+  entryContentType: (id: TEntryId) => TContentType
+  parentId: (id: TEntryId) => string
+  thumbFile: (id: TEntryId) => TEntryId
 }

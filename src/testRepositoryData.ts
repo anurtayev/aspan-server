@@ -3,25 +3,27 @@ import { IMetaData, IFile, IFolder } from './types'
 type TMeta = {
   meta?: IMetaData
 }
-type TReducedFile = Pick<IFile, 'id' | 'type'> & TMeta
-type TReducedFolder = Pick<IFolder, 'id' | 'type'> &
+type TReducedFile = Pick<IFile, 'name' | 'type' | 'contentType'> & TMeta
+type TReducedFolder = Pick<IFolder, 'name' | 'type'> &
   TMeta & {
     children?: TChildren
   }
 export type TChildren = Array<TReducedFile | TReducedFolder>
 
-export const entryLiterals: TChildren = [
+export const tstEntries: TChildren = [
   {
-    id: 'f1',
-    type: 'file'
+    name: 'f1',
+    type: 'file',
+    contentType: '.jpg'
   },
   {
-    id: 'f2',
+    name: 'f2',
     type: 'file',
+    contentType: '.jpg',
     meta: { tags: ['receipts', 'electronics', 'NYtour'] }
   },
   {
-    id: 'fo1',
+    name: 'fo1',
     type: 'folder',
     meta: {
       tags: ['firstFolder'],
@@ -33,19 +35,19 @@ export const entryLiterals: TChildren = [
     },
     children: [
       {
-        id: 'sf1',
+        name: 'sf1',
         type: 'folder'
       },
       {
-        id: 'sf2',
+        name: 'sf2',
         type: 'folder'
       },
       {
-        id: 'sfo1',
+        name: 'sfo1',
         type: 'folder'
       },
       {
-        id: 'subFolder34',
+        name: 'subFolder34',
         type: 'folder',
         meta: {
           tags: ['notEmpty', 'NY', '2018', 'friends'],
@@ -58,20 +60,23 @@ export const entryLiterals: TChildren = [
         },
         children: [
           {
-            id: 'checkCT.jpeg',
+            name: 'checkCT',
             type: 'file',
+            contentType: '.jpg',
             meta: {
               attributes: [['description', 'Serega taking a picture']],
               tags: ['favorite', 'friends']
             }
           },
           {
-            id: 'anotherExt_f2.jpg',
-            type: 'file'
+            name: 'anotherExt_f2',
+            type: 'file',
+            contentType: '.jpg'
           },
           {
-            id: 'gifFile.gif',
-            type: 'file'
+            name: 'gifFile',
+            type: 'file',
+            contentType: '.jpg'
           }
         ]
       }

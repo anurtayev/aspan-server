@@ -1,3 +1,4 @@
+import { join, dirname, basename, extname, normalize } from 'path'
 import {
   ensureDir,
   lstat,
@@ -5,9 +6,10 @@ import {
   readJson,
   writeJson,
   Stats,
-  pathExists
+  pathExists,
+  remove,
+  emptyDir
 } from 'fs-extra'
-import { join, normalize } from 'path'
 import * as _ from 'lodash'
 import {
   IRepositoryOptions,
@@ -15,19 +17,11 @@ import {
   TEntryId,
   IMetaData,
   TEntry,
-  TAttributeType
+  TAttributeType,
+  TFileSystemPath,
+  TContentType
 } from './types'
 import * as glob from 'glob'
-import {
-  cleanseWindowsPath,
-  fsPath,
-  metaFile,
-  metaFolder,
-  entryContentType,
-  entryName,
-  parentId,
-  thumbFile
-} from './repositoryPath'
 import {
   addTag,
   removeTag,
@@ -41,29 +35,27 @@ export default class implements IRepository {
 
   public getEntry = async (id: TEntryId): Promise<TEntry> => {
     const stats = await this.stats(id)
-    const cleansedId = cleanseWindowsPath(id)
-    const cleansedParentId = cleanseWindowsPath(parentId(id))
 
     return stats.isFile()
       ? {
-          id: cleansedId,
+          id: id,
           type: 'file',
-          name: entryName(id),
-          parentId: cleansedParentId,
-          contentType: entryContentType(id),
+          name: this.entryName(id),
+          parentId: this.parentId(id),
+          contentType: this.entryContentType(id),
           size: stats.size
         }
       : {
-          id: cleansedId,
+          id: id,
           type: 'folder',
-          name: entryName(id),
-          parentId: cleansedParentId
+          name: this.entryName(id),
+          parentId: this.parentId(id)
         }
   }
 
   public getFolderEntries = async (id: TEntryId): Promise<TEntry[]> =>
     await Promise.all(
-      (await readdir(fsPath(id, this.options)))
+      (await readdir(this.fsPath(id)))
         .filter(entryId => entryId !== this.options.metaFolder)
         .map(entryId => normalize(join(id, entryId)))
         .map(async entryId => await this.getEntry(entryId))
@@ -85,7 +77,9 @@ export default class implements IRepository {
           Promise.all(
             files
               .map(fileName =>
-                cleanseWindowsPath(fileName.slice(this.options.path.length))
+                this.cleanseWindowsPath(
+                  fileName.slice(this.options.path.length)
+                )
               )
               .map(
                 async (fileName: string) =>
@@ -98,7 +92,7 @@ export default class implements IRepository {
   }
 
   public getMetaData = async (id: TEntryId): Promise<IMetaData | null> => {
-    const metaFileFSPath = fsPath(metaFile(id, this.options), this.options)
+    const metaFileFSPath = this.fsPath(this.metaFile(id))
     if (await pathExists(metaFileFSPath)) {
       return await readJson(metaFileFSPath)
     } else {
@@ -111,8 +105,8 @@ export default class implements IRepository {
     metaData: IMetaData
   ): Promise<IMetaData> => {
     if (metaData && (metaData.attributes || metaData.tags)) {
-      await ensureDir(metaFolder(id, this.options))
-      await writeJson(metaFile(id, this.options), metaData)
+      await ensureDir(this.metaFolder(id))
+      await writeJson(this.metaFile(id), metaData)
     }
     return metaData
   }
@@ -141,14 +135,13 @@ export default class implements IRepository {
       removeAttribute(await this.getMetaData(id), attribute)
     )
 
-  private stats = async (id: TEntryId): Promise<Stats> =>
-    lstat(fsPath(id, this.options))
+  private stats = async (id: TEntryId): Promise<Stats> => lstat(this.fsPath(id))
 
   public makeThumb = async (id: TEntryId) => {
-    await ensureDir(metaFolder(id, this.options))
-    sharp(fsPath(id, this.options))
+    await ensureDir(this.metaFolder(id))
+    sharp(this.fsPath(id))
       .resize(200, 200)
-      .toFile(thumbFile(id, this.options))
+      .toFile(this.thumbFile(id))
   }
 
   public makeAllThumbs = async () => {
@@ -163,12 +156,10 @@ export default class implements IRepository {
 
   public getAllFolderIds = async (path: TEntryId = '/'): Promise<any> => {
     console.log('1')
-    console.log(fsPath(path, this.options))
-    console.log(
-      JSON.stringify(await readdir(fsPath(path, this.options)), null, 2)
-    )
+    console.log(this.fsPath(path))
+    console.log(JSON.stringify(await readdir(this.fsPath(path)), null, 2))
 
-    const files = (await readdir(fsPath(path, this.options))).map(f =>
+    const files = (await readdir(this.fsPath(path))).map(f =>
       join(this.options.path, f)
     )
     console.log(JSON.stringify(files, null, 2))
@@ -192,5 +183,38 @@ export default class implements IRepository {
      */
 
     return expanded
+  }
+
+  public cleanseWindowsPath = (id: TEntryId): TFileSystemPath =>
+    id.replace(/\\/g, '/')
+
+  public fsPath = (id: TEntryId): TFileSystemPath => {
+    const path = normalize(join(this.options.path, id))
+    const cleansedPath = this.cleanseWindowsPath(path)
+    return cleansedPath.endsWith('/') ? path.slice(0, -1) : path
+  }
+
+  public metaFolder = (id: TEntryId): TFileSystemPath =>
+    this.cleanseWindowsPath(join(dirname(id), this.options.metaFolder))
+
+  public metaFile = (id: TEntryId): TFileSystemPath =>
+    this.cleanseWindowsPath(join(this.metaFolder(id), `${basename(id)}.json`))
+
+  public entryName = (id: TEntryId): string => basename(id, extname(id))
+
+  public entryContentType = (id: TEntryId): TContentType =>
+    extname(id).slice(1) as TContentType
+
+  public parentId = (id: TEntryId): string =>
+    this.cleanseWindowsPath(dirname(id))
+
+  public thumbFile = (id: TEntryId): TEntryId =>
+    `${this.metaFolder(id)}/${this.options.thumbsPrefix}${this.entryName(
+      id
+    )}.${this.entryContentType(id)}`
+
+  public empty = async () => {
+    await remove(this.options.path)
+    await emptyDir(this.options.path)
   }
 }
