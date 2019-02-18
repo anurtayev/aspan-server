@@ -8,7 +8,8 @@ import {
   Stats,
   pathExists,
   remove,
-  emptyDir
+  emptyDir,
+  readFile
 } from 'fs-extra'
 import * as _ from 'lodash'
 import {
@@ -19,7 +20,8 @@ import {
   TEntry,
   TAttributeType,
   TFileSystemPath,
-  TContentType
+  TContentType,
+  TAsyncEntryAction
 } from './types'
 import * as glob from 'glob'
 import {
@@ -54,11 +56,19 @@ export default class implements IRepository {
   }
 
   public getFolderEntries = async (id: TEntryId): Promise<TEntry[]> =>
-    await Promise.all(
+    (await Promise.all(
       (await readdir(this.fsPath(id)))
-        .filter(entryId => entryId !== this.options.metaFolder)
-        .map(entryId => normalize(join(id, entryId)))
-        .map(async entryId => await this.getEntry(entryId))
+        .filter(
+          entryId =>
+            entryId !== this.options.metaFolder &&
+            !basename(entryId).startsWith('.')
+        )
+        .map(entryId => this.cleanseWindowsPath(normalize(join(id, entryId))))
+        .map(entryId => this.getEntry(entryId))
+    )).filter(
+      (entry: TEntry) =>
+        entry.type === 'folder' ||
+        (entry.type === 'file' && this.options.exts.includes(entry.contentType))
     )
 
   public findEntries = async (pattern: string): Promise<TEntry[]> => {
@@ -137,52 +147,25 @@ export default class implements IRepository {
 
   private stats = async (id: TEntryId): Promise<Stats> => lstat(this.fsPath(id))
 
+  public walkChildren = async (
+    folder: TEntryId,
+    callBack: TAsyncEntryAction
+  ) => {
+    await Promise.all(
+      (await this.getFolderEntries(folder)).map(async entry => {
+        await callBack(entry)
+        if (entry.type === 'folder') {
+          return this.walkChildren(entry.id, callBack)
+        }
+      })
+    )
+  }
+
   public makeThumb = async (id: TEntryId) => {
-    await ensureDir(this.metaFolder(id))
-    sharp(this.fsPath(id))
+    await ensureDir(this.fsPath(this.metaFolder(id)))
+    await sharp(this.fsPath(id))
       .resize(200, 200)
-      .toFile(this.thumbFile(id))
-  }
-
-  public makeAllThumbs = async () => {
-    try {
-      await Promise.all(
-        (await this.getAllFolderIds()).map(id => this.makeThumb(id))
-      )
-    } catch (e) {
-      console.error(e)
-    }
-  }
-
-  public getAllFolderIds = async (path: TEntryId = '/'): Promise<any> => {
-    console.log('1')
-    console.log(this.fsPath(path))
-    console.log(JSON.stringify(await readdir(this.fsPath(path)), null, 2))
-
-    const files = (await readdir(this.fsPath(path))).map(f =>
-      join(this.options.path, f)
-    )
-    console.log(JSON.stringify(files, null, 2))
-
-    const stats = await Promise.all(files.map(f => this.stats(f)))
-
-    const expanded = await Promise.all(
-      files.map(async (entry, index) =>
-        stats[index].isDirectory() ? await this.getAllFolderIds(entry) : entry
-      )
-    )
-
-    /**
-     * 
-     const flatAndFilter = r
-     .flatten(expanded)
-     .filter(f => ctx.repoExtensions.some(_ => _ === extname(f).toLowerCase()))
-     .filter(f => !basename(f).startsWith('thumb_'))
-     .map(cleanseWindowsPath)
-     return flatAndFilter
-     */
-
-    return expanded
+      .toFile(this.fsPath(this.thumbFile(id)))
   }
 
   public cleanseWindowsPath = (id: TEntryId): TFileSystemPath =>
@@ -216,5 +199,16 @@ export default class implements IRepository {
   public empty = async () => {
     await remove(this.options.path)
     await emptyDir(this.options.path)
+  }
+
+  public getBase64ImageString = async (id: TEntryId) => {
+    return new Buffer(await readFile(this.fsPath(id))).toString('base64')
+  }
+
+  public getBase64ThumbString = async (id: TEntryId) => {
+    if (pathExists(id)) {
+      return this.getBase64ImageString(this.thumbFile(id))
+    }
+    return null
   }
 }

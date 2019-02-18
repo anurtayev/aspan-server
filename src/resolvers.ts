@@ -1,36 +1,36 @@
 // tslint:disable:variable-name
 
-import { TEntry } from './types'
+import { TEntry, IContext } from './types'
 import { NumberStringBooleanInstance } from './NumberStringBoolean'
 
 export const resolvers = {
   NumberStringBoolean: NumberStringBooleanInstance,
 
   Query: {
-    getRootFolderEntries(_root, _args, { repository }) {
+    getRootFolderEntries(_root, _args, { repository }: IContext) {
       const rootFolderPath = '/'
       return repository.getFolderEntries(rootFolderPath)
     },
 
-    getFolderEntries(_root, { id }, { repository }) {
+    getFolderEntries(_root, { id }, { repository }: IContext) {
       return repository.getFolderEntries(id)
     }
   },
 
   Mutation: {
-    addTag(_root, { id, tag }, { repository }) {
+    addTag(_root, { id, tag }, { repository }: IContext) {
       return repository.addTag(id, tag)
     },
 
-    removeTag(_root, { id, tag }, { repository }) {
+    removeTag(_root, { id, tag }, { repository }: IContext) {
       return repository.removeTag(id, tag)
     },
 
-    addAttribute(_root, { id, attribute }, { repository }) {
+    addAttribute(_root, { id, attribute }, { repository }: IContext) {
       return repository.addAttribute(id, attribute)
     },
 
-    removeAttribute(_root, { id, attributeKey }, { repository }) {
+    removeAttribute(_root, { id, attributeKey }, { repository }: IContext) {
       return repository.removeAttribute(id, attributeKey)
     }
   },
@@ -46,18 +46,26 @@ export const resolvers = {
   },
 
   Folder: {
-    metaData(entry: TEntry, _args, { repository }) {
+    metaData(entry: TEntry, _args, { repository }: IContext) {
       return repository.getMetaData(entry.id)
     },
 
-    children(entry: TEntry, _args, { repository }) {
+    children(entry: TEntry, _args, { repository }: IContext) {
       return repository.getFolderEntries(entry.id)
     }
   },
 
   File: {
-    metaData(entry: TEntry, _args, { repository }) {
+    metaData(entry: TEntry, _args, { repository }: IContext) {
       return repository.getMetaData(entry.id)
+    },
+
+    image(entry: TEntry, _args, { repository }: IContext) {
+      return repository.getBase64ImageString(entry.id)
+    },
+
+    thumbImage(entry: TEntry, _args, { repository }: IContext) {
+      return repository.getBase64ImageString(entry.id)
     }
   }
 }

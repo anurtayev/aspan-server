@@ -4,6 +4,7 @@ export type TEntryId = string
 export type TContentType = string
 export type TFileSystemPath = string
 export type TAttributeType = string | boolean | number
+export type TAsyncEntryAction = (entry: TEntry) => Promise<any>
 
 export interface IRepositoryOptions {
   /**
@@ -12,6 +13,9 @@ export interface IRepositoryOptions {
   path: string
   metaFolder: string
   thumbsPrefix: string
+  thumbsLength: number
+  thumbsWidth: number
+  exts: string[]
 }
 
 export type TAttribute = [string, TAttributeType]
@@ -62,8 +66,8 @@ export interface IRepository {
   addAttribute: (id: TEntryId, attribute: TAttribute) => Promise<IMetaData>
   removeAttribute: (id: TEntryId, attributeKey: string) => Promise<IMetaData>
 
+  walkChildren: (folder: TEntryId, callBack: TAsyncEntryAction) => Promise<void>
   makeThumb: (id: TEntryId) => Promise<void>
-  makeAllThumbs: () => Promise<void>
 
   empty: () => Promise<void>
 
@@ -75,4 +79,11 @@ export interface IRepository {
   entryContentType: (id: TEntryId) => TContentType
   parentId: (id: TEntryId) => string
   thumbFile: (id: TEntryId) => TEntryId
+
+  getBase64ImageString: (id: TEntryId) => Promise<string>
+  getBase64ThumbString: (id: TEntryId) => Promise<string | null>
+}
+
+export interface IContext {
+  repository: IRepository
 }
