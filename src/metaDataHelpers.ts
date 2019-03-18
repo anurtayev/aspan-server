@@ -1,5 +1,4 @@
 import { IMetaData, TAttributeType } from './types'
-import * as lodash from 'lodash'
 
 export const addTag = (metaData: IMetaData | null, tag: string): IMetaData => {
   if (!metaData) {
@@ -39,7 +38,7 @@ export const removeTag = (
 
   return {
     ...metaData,
-    tags: lodash.without(metaData.tags, tag)
+    tags: metaData.tags.filter(_ => _ !== tag)
   }
 }
 

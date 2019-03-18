@@ -1,5 +1,3 @@
-import * as _ from 'lodash'
-
 export type TEntryId = string
 export type TContentType = string
 export type TFileSystemPath = string

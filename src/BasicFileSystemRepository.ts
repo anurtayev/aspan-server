@@ -11,7 +11,6 @@ import {
   emptyDir,
   readFile
 } from 'fs-extra'
-import * as _ from 'lodash'
 import {
   IRepositoryOptions,
   IRepository,
